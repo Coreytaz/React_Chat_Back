@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ModelType} from '@typegoose/typegoose/lib/types'
 import { compare, genSalt, hash } from 'bcryptjs';
@@ -8,7 +9,7 @@ import { AuthDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly jwtService: JwtService){}
+    constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly jwtService: JwtService, private readonly configService: ConfigService){}
 
     async login(dto: AuthDto) {
         const user = await this.validateUser(dto)
@@ -41,10 +42,33 @@ export class AuthService {
         }
     }
 
+    async refresh(req) {
+        const authHeader = req.headers.authorization;
+        const bearer = authHeader.split(' ')[0]
+        const token = authHeader.split(' ')[1]
+
+
+        if (bearer !== 'Bearer' || !token) {
+            throw new UnauthorizedException('Не верный токен');
+        }
+        const userData = this.validateAccessToken(token)
+        const dto = await this.findToken(userData.id)
+
+        if (!userData) {
+            throw new UnauthorizedException()
+        }
+
+        const tokens = await this.issueTokenPair(String(dto._id))
+
+        return {
+            user: this.returnUserField(dto),
+            ...tokens,
+        }
+    }
+
     async validateUser(dto: AuthDto) {
         const user = await this.UserModel.findOne({email: dto.email})
         if (!user) throw new UnauthorizedException('Пользователь не найден :(')
-
         const isValidPassword = await compare(dto.password, user.password)
         if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
 
@@ -55,10 +79,24 @@ export class AuthService {
         const data = {_id}
 
         const accessToken = await this.jwtService.signAsync(data, {
-            expiresIn: '10d'
+            expiresIn: '1d'
         })
 
         return {accessToken}
+    }
+
+    async findToken(id: string) {
+        const tokenData = await this.UserModel.findOne({id})
+        return tokenData;
+    }
+
+    validateAccessToken(token: string) {
+        try {
+            const userData = this.jwtService.verify(token, this.configService.get('JWT_SECRET'))
+            return userData;
+        } catch (error) {
+            return null
+        }
     }
 
     returnUserField(user: UserModel) {
