@@ -52,7 +52,7 @@ export class AuthService {
             throw new UnauthorizedException('Не верный токен');
         }
         const userData = this.validateAccessToken(token)
-        const dto = await this.findToken(userData.id)
+        const dto = await this.findToken(userData._id)
 
         if (!userData) {
             throw new UnauthorizedException()
@@ -85,8 +85,8 @@ export class AuthService {
         return {accessToken}
     }
 
-    async findToken(id: string) {
-        const tokenData = await this.UserModel.findOne({id})
+    async findToken(_id: string) {
+        const tokenData = await this.UserModel.findById({_id})
         return tokenData;
     }
 
