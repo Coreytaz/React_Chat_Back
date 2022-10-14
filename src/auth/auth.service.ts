@@ -66,6 +66,10 @@ export class AuthService {
         }
     }
 
+    async logout(res: Response) {
+        return res.json();
+    }
+
     async validateUser(dto: AuthDto) {
         const user = await this.UserModel.findOne({email: dto.email})
         if (!user) throw new UnauthorizedException('Пользователь не найден :(')
