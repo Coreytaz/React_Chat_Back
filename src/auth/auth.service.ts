@@ -23,12 +23,15 @@ export class AuthService {
     }
 
     async register(dto: AuthDto) {
-        const oldUser = await this.UserModel.findOne({email: dto.email})
-        if (oldUser) throw new BadRequestException('Пользователь с таким E-mail есть в системе')
+        const oldEmail = await this.UserModel.findOne({email: dto.email})
+        if (oldEmail) throw new BadRequestException('Пользователь с таким E-mail или Логином есть в системе')
+
+        const oldLogin = await this.UserModel.findOne({login: dto.login})
+        if (oldLogin) throw new BadRequestException('Пользователь с таким E-mail или Логином есть в системе')
 
         const salt = await genSalt(10)
 
-        const newUser = new this.UserModel({email: dto.email, password: await hash(dto.password, salt)})
+        const newUser = new this.UserModel({email: dto.email, login: dto.login,username: dto.login ,password: await hash(dto.password, salt)})
 
         await newUser.save()
 
@@ -71,12 +74,21 @@ export class AuthService {
     }
 
     async validateUser(dto: AuthDto) {
-        const user = await this.UserModel.findOne({email: dto.email})
-        if (!user) throw new UnauthorizedException('Пользователь не найден :(')
-        const isValidPassword = await compare(dto.password, user.password)
-        if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
-
-        return user
+        if (dto.email) {
+            const user = await this.UserModel.findOne({email: dto.email})
+            if (!user) throw new UnauthorizedException('Пользователь не найден :(')
+            const isValidPassword = await compare(dto.password, user.password)
+            if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
+            return user
+        }
+        if (dto.login) {
+            console.log(dto)
+            const user = await this.UserModel.findOne({login: dto.login})
+            if (!user) throw new UnauthorizedException('Пользователь не найден :(')
+            const isValidPassword = await compare(dto.password, user.password)
+            if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
+            return user
+        }
     }
 
     async issueTokenPair(_id: string) {
@@ -106,7 +118,9 @@ export class AuthService {
     returnUserField(user: UserModel) {
         return {
             _id: user._id,
-            email: user.email
+            email: user.email,
+            login: user.login,
+            username: user.username
         }
     }
 }
