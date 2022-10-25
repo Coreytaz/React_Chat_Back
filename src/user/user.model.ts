@@ -11,7 +11,7 @@ export class UserModel extends TimeStamps {
     @prop({unique: true})
     login: string
 
-    @prop({default: ''})
+    @prop({default: 'http://localhost:5000/api/user/avatars/default.jpg'})
     avatar: string
 
     @prop()
