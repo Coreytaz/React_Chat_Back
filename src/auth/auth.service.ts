@@ -82,7 +82,6 @@ export class AuthService {
             return user
         }
         if (dto.login) {
-            console.log(dto)
             const user = await this.UserModel.findOne({login: dto.login})
             if (!user) throw new UnauthorizedException('Пользователь не найден :(')
             const isValidPassword = await compare(dto.password, user.password)
