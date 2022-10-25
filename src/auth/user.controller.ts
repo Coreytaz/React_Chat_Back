@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Param, Post, Req, Res, UploadedFile, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
+import { Controller, Get, HttpCode, Param, Post, Req, Res, UnauthorizedException, UploadedFile, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UserService } from './user.service'
 import { diskStorage } from  'multer';
@@ -11,7 +11,7 @@ export class UserController {
 
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
-    @Post(':userid/avatar')
+    @Post('/avatar')
     @UseInterceptors(FileInterceptor('file',
       {
         storage: diskStorage({
@@ -24,8 +24,13 @@ export class UserController {
       }
     )
     )
-    async uploadAvatar(@Param('userid') userId, @UploadedFile() file: Express.Multer.File) {
-      this.userService.setAvatar(userId, `${this.SERVER_URL}${file.path}`);
+    async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File, @Res() res) {
+     const avatar = this.userService.setAvatar(req, `${this.SERVER_URL}${file.path}`, file);
+     if (avatar) {
+      res.json({message: "Фото успешно установлено"})
+     } else {
+      res.status(400).send({message: "Error"})
+     }
     }
 
     @Get('avatars/:fileId')
