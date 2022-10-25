@@ -11,6 +11,9 @@ export class UserModel extends TimeStamps {
     @prop({unique: true})
     login: string
 
+    @prop({default: ''})
+    avatar: string
+
     @prop()
     username: string
 
