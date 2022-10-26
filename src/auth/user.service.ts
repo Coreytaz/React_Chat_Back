@@ -11,7 +11,7 @@ import * as fs from 'fs'
 export class UserService {
     constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly authService: AuthService) { }
 
-    async setAvatar(req, avatarUrl: string, file: Express.Multer.File) {
+    async setAvatar(req, avatarUrl: string, file: Express.Multer.File, res) {
         const authHeader = req.headers.authorization;
 
         const bearer = authHeader.split(' ')[0]
@@ -23,15 +23,39 @@ export class UserService {
         const userData = this.authService.validateAccessToken(token)
         if (!userData) {
             fs.unlinkSync(file.path)
-            throw new UnauthorizedException()
+            return res.status(403).json({message: "Не удалось авторизоваться"})
         }
         const user = await this.authService.findToken(userData._id)
         if (!user) {
             fs.unlinkSync(file.path)
-            throw new UnauthorizedException('Пользователь не найден :(')
+            return res.status(403).json({message: "Не удалось найти пользователь"})
         }
 
         user.avatar = avatarUrl
         await user.save()
+        return res.json({message: "Аватар успешно установлен"})
+    }
+
+    async deleteAvatar(req, res) {
+        const authHeader = req.headers.authorization;
+
+        const bearer = authHeader.split(' ')[0]
+        const token = authHeader.split(' ')[1]
+
+        if (bearer !== 'Bearer' || !token) {
+            throw new UnauthorizedException('Не верный токен');
+        }
+        const userData = this.authService.validateAccessToken(token)
+        if (!userData) {
+            return res.status(403).json({message: "Не удалось авторизоваться"})
+        }
+        const user = await this.authService.findToken(userData._id)
+        if (!user) {
+            return res.status(403).json({message: "Не удалось найти пользователь"})
+        }
+        fs.unlinkSync(user.avatar.split('/').at(-1))
+        user.avatar = null
+        await user.save()
+        return res.json({message: "Аватар успешно удален"})
     }
 }
