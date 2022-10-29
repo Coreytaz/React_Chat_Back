@@ -12,7 +12,7 @@ export class UserController {
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('/avatar')
-    @UseInterceptors(FileInterceptor('file',
+    @UseInterceptors(FileInterceptor('avatar',
       {
         storage: diskStorage({
           destination: './avatars',
@@ -25,6 +25,9 @@ export class UserController {
     )
     )
     async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File, @Res() res) {
+      if (!file) {
+        return res.status(404).json({message: "Не удалось получить файл"})
+      }
         this.userService.setAvatar(req, `${this.SERVER_URL}${file.path}`, file, res);
     }
 
