@@ -30,6 +30,9 @@ export class UserService {
             fs.unlinkSync(file.path)
             return res.status(403).json({message: "Не удалось найти пользователь"})
         }
+        if (user.avatar !== null) {
+            fs.unlinkSync(user.avatar.split('/').at(-1))
+        }
 
         user.avatar = avatarUrl
         await user.save()
@@ -52,6 +55,9 @@ export class UserService {
         const user = await this.authService.findToken(userData._id)
         if (!user) {
             return res.status(403).json({message: "Не удалось найти пользователь"})
+        }
+        if (!user.avatar) {
+            return
         }
         fs.unlinkSync(user.avatar.split('/').at(-1))
         user.avatar = null
