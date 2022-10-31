@@ -8,6 +8,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { getJwtConfig } from 'src/config/jwt.config';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
+import { PassportModule } from '@nestjs/passport';
+import { LocalStrategy } from 'src/strategies/local.strategy';
+import { JwtStrategy } from 'src/strategies/jwt.strategy';
 
 @Module({
   imports: [TypegooseModule.forFeature([
@@ -24,8 +27,9 @@ import { UserController } from './user.controller';
     inject: [ConfigService],
     useFactory: getJwtConfig
   }),
+  PassportModule
 ],
-  providers: [AuthService, UserService],
+  providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
   controllers: [AuthController, UserController]
 })
 export class AuthModule {}

@@ -1,14 +1,16 @@
-import { Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UnauthorizedException, UploadedFile, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
+import { Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UserService } from './user.service'
 import { diskStorage } from  'multer';
 import { extname } from  'path';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
     SERVER_URL  =  "http://localhost:5000/api/user/"
     constructor(private userService: UserService){}
 
+    @UseGuards(JwtAuthGuard)
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('/avatar')
@@ -31,6 +33,7 @@ export class UserController {
         this.userService.setAvatar(req, `${this.SERVER_URL}${file.path}`, file, res);
     }
 
+    @UseGuards(JwtAuthGuard)
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Delete('/avatar')

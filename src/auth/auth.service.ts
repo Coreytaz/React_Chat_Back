@@ -46,20 +46,7 @@ export class AuthService {
     }
 
     async refresh(req) {
-        const authHeader = req.headers.authorization;
-        const bearer = authHeader.split(' ')[0]
-        const token = authHeader.split(' ')[1]
-
-
-        if (bearer !== 'Bearer' || !token) {
-            throw new UnauthorizedException('Не верный токен');
-        }
-        const userData = this.validateAccessToken(token)
-        const dto = await this.findToken(userData._id)
-
-        if (!userData) {
-            throw new UnauthorizedException()
-        }
+        const dto = req.user
 
         const tokens = await this.issueTokenPair(String(dto._id))
 
@@ -93,25 +80,9 @@ export class AuthService {
     async issueTokenPair(_id: string) {
         const data = {_id}
 
-        const accessToken = await this.jwtService.signAsync(data, {
-            expiresIn: '1d'
-        })
+        const accessToken = await this.jwtService.signAsync(data)
 
         return {accessToken}
-    }
-
-    async findToken(_id: string) {
-        const tokenData = await this.UserModel.findById({_id})
-        return tokenData;
-    }
-
-    validateAccessToken(token: string) {
-        try {
-            const userData = this.jwtService.verify(token, this.configService.get('JWT_SECRET'))
-            return userData;
-        } catch (error) {
-            return null
-        }
     }
 
     returnUserField(user: UserModel) {
