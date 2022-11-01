@@ -1,9 +1,10 @@
-import { Controller, Delete, Get, HttpCode, Param, Post, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UserService } from './user.service'
 import { diskStorage } from  'multer';
 import { extname } from  'path';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { UpdateAuthDto } from './dto/auth.dto';
 
 @Controller('user')
 export class UserController {
@@ -41,6 +42,13 @@ export class UserController {
         this.userService.deleteAvatar(req, res);
      }
 
+    @UseGuards(JwtAuthGuard)
+    @UsePipes(new ValidationPipe())
+    @HttpCode(200)
+    @Patch('/me')
+    async update(@Req() req, @Body() updateDto: UpdateAuthDto) {
+        this.userService.updateUser(req, updateDto);
+     }
 
     @Get('avatars/:fileId')
     async serveAvatar(@Param('fileId') fileId, @Res() res): Promise<any> {

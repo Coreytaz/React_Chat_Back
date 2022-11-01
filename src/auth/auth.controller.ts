@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards, UsePipes,ValidationPipe } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard'
-import { AuthDto } from './auth.dto'
+import { CreateAuthDto } from './dto/auth.dto'
 import { AuthService } from './auth.service'
 
 @Controller('auth')
@@ -11,13 +11,13 @@ export class AuthController {
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('login')
-    async login(@Body() dto: AuthDto) {
+    async login(@Body() dto: CreateAuthDto) {
         return this.AuthService.login(dto)
     }
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('register')
-    async register(@Body() dto: AuthDto) {
+    async register(@Body() dto: CreateAuthDto) {
         return this.AuthService.register(dto)
     }
 

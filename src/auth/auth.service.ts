@@ -5,13 +5,13 @@ import { ModelType} from '@typegoose/typegoose/lib/types'
 import { compare, genSalt, hash } from 'bcryptjs';
 import { InjectModel } from 'nestjs-typegoose';
 import { UserModel } from 'src/user/user.model';
-import { AuthDto } from './auth.dto';
+import { CreateAuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
     constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly jwtService: JwtService, private readonly configService: ConfigService){}
 
-    async login(dto: AuthDto) {
+    async login(dto: CreateAuthDto) {
         const user = await this.validateUser(dto)
 
         const tokens = await this.issueTokenPair(String(user._id))
@@ -22,7 +22,7 @@ export class AuthService {
         }
     }
 
-    async register(dto: AuthDto) {
+    async register(dto: CreateAuthDto) {
         const oldEmail = await this.UserModel.findOne({email: dto.email})
         if (oldEmail) throw new BadRequestException('Пользователь с таким E-mail или Логином есть в системе')
 
@@ -60,7 +60,7 @@ export class AuthService {
         return res.json();
     }
 
-    async validateUser(dto: AuthDto) {
+    async validateUser(dto: CreateAuthDto) {
         if (dto.email) {
             const user = await this.UserModel.findOne({email: dto.email})
             if (!user) throw new UnauthorizedException('Пользователь не найден :(')

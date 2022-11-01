@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
-import { AuthDto } from '../auth/auth.dto';
+import { CreateAuthDto } from '../auth/dto/auth.dto';
 import { Strategy } from 'passport-local';
 
 
@@ -13,7 +13,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   async validate(req: Express.Request, emailOrLogin: string, password: string): Promise<any> {
     const _emailOrLogin = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(emailOrLogin) ? { email: emailOrLogin } : { login: emailOrLogin }
-    const dto = {..._emailOrLogin, password} as AuthDto
+    const dto = {..._emailOrLogin, password} as CreateAuthDto
     const user = this.authService.validateUser(dto)
     if (!user) {
       throw new UnauthorizedException();

@@ -32,4 +32,8 @@ export class UserService {
         await userData.save()
         return res.json({message: "Аватар успешно удален", avatar: userData.avatar})
     }
+
+    async updateUser(req, updateDto) {
+        return await this.UserModel.findByIdAndUpdate(req.user._id, updateDto)
+    }
 }
