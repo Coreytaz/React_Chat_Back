@@ -4,6 +4,7 @@ import { UserModel } from '../user/user.model';
 import { ModelType } from '@typegoose/typegoose/lib/types';
 import { AuthService } from './auth.service'
 import * as fs from 'fs'
+import { UpdateAuthDto } from './dto/auth.dto';
 
 
 
@@ -33,7 +34,8 @@ export class UserService {
         return res.json({message: "Аватар успешно удален", avatar: userData.avatar})
     }
 
-    async updateUser(req, updateDto) {
-        return await this.UserModel.findByIdAndUpdate(req.user._id, updateDto)
+    async updateUser(req, updateDto: UpdateAuthDto) {
+        const user = {username: updateDto.username, email: updateDto.email}
+        return await this.UserModel.findByIdAndUpdate(req.user._id, user)
     }
 }
