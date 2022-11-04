@@ -5,8 +5,11 @@ import { ModelType } from '@typegoose/typegoose/lib/types';
 import { AuthService } from './auth.service'
 import * as fs from 'fs'
 import { UpdateAuthDto } from './dto/auth.dto';
+import { SearchUserDto } from './dto/user.dto';
 
-
+const regex = (string: string):RegExp => {
+    return new RegExp(`^${string}`,"g");
+}
 
 @Injectable()
 export class UserService {
@@ -37,5 +40,20 @@ export class UserService {
     async updateUser(req, updateDto: UpdateAuthDto) {
         const user = {username: updateDto.username, email: updateDto.email}
         return await this.UserModel.findByIdAndUpdate(req.user._id, user)
+    }
+
+    async search(dto: SearchUserDto) {
+        if (dto.email || dto.username) {
+            const qb = await this.UserModel.find({$or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, email: true, avatar: true, _id: false}).limit(dto.limit || 10)
+            return {
+                items: qb,
+                total: qb.length
+            }
+        }
+        const qb = await this.UserModel.find({}, {username: true, email: true, avatar: true, _id: false}).limit(dto.limit || 10)
+        return {
+            items: qb,
+            total: qb.length
+        }
     }
 }
