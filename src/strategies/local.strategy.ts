@@ -1,22 +1,21 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
-import { CreateAuthDto } from '../auth/dto/auth.dto';
+import { LoginAuthDto } from '../auth/dto/auth.dto';
 import { Strategy } from 'passport-local';
 
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-      super({ usernameField: 'emailOrLogin' , passReqToCallback: true});
+      super({ usernameField: 'EmailorLogin' , passReqToCallback: true});
   }
 
-  async validate(req: Express.Request, emailOrLogin: string, password: string): Promise<any> {
-    const _emailOrLogin = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(emailOrLogin) ? { email: emailOrLogin } : { login: emailOrLogin }
-    const dto = {..._emailOrLogin, password} as CreateAuthDto
+  async validate(req: Express.Request, EmailorLogin: string, password: string): Promise<any> {
+    const dto = {EmailorLogin, password} as LoginAuthDto
     const user = this.authService.validateUser(dto)
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({message:"Пользователь не найден :("});
     }
     return user;
   }

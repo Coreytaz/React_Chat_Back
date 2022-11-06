@@ -28,25 +28,11 @@ export class CreateAuthDto {
 }
 
 export class LoginAuthDto {
-    @ValidateIf((_, v) => {
-        return v !== undefined
-    })
-    @IsEmail({}, {
-        message: 'Не правильный E-mail'
-    })
-    @IsNotEmpty()
-    email: string;
+    @IsNotEmpty({message: 'E-mail или Логин не должен быть пустым'})
+    @IsString()
+    EmailorLogin: string;
 
-    @ValidateIf((_, v) => {
-        return v !== undefined
-    })
-    @IsNotEmpty()
-    login: string;
-
-    @IsNotEmpty()
-    @MinLength(6, {
-        message: 'Пароль должен содержать не менее 6 символов!'
-    })
+    @IsNotEmpty({message: 'Пароль не должен быть пустым'})
     @IsString()
     password: string;
 }
@@ -56,12 +42,12 @@ export class UpdateAuthDto {
         message: 'Не правильный E-mail'
     })
     @IsNotEmpty()
-    email: string;
+    email?: string;
 
     @MinLength(3, {
         message: 'Имя пользователя должно содержать не менее 3 символов!'
     })
     @IsNotEmpty()
     @IsString()
-    username: string;
+    username?: string;
 }

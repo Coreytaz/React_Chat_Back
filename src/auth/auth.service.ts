@@ -5,13 +5,13 @@ import { ModelType} from '@typegoose/typegoose/lib/types'
 import { compare, genSalt, hash } from 'bcryptjs';
 import { InjectModel } from 'nestjs-typegoose';
 import { UserModel } from 'src/user/user.model';
-import { CreateAuthDto } from './dto/auth.dto';
+import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
     constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly jwtService: JwtService, private readonly configService: ConfigService){}
 
-    async login(dto: CreateAuthDto) {
+    async login(dto: LoginAuthDto) {
         const user = await this.validateUser(dto)
 
         const tokens = await this.issueTokenPair(String(user._id))
@@ -60,21 +60,12 @@ export class AuthService {
         return res.json();
     }
 
-    async validateUser(dto: CreateAuthDto) {
-        if (dto.email) {
-            const user = await this.UserModel.findOne({email: dto.email})
-            if (!user) throw new UnauthorizedException('Пользователь не найден :(')
-            const isValidPassword = await compare(dto.password, user.password)
-            if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
-            return user
-        }
-        if (dto.login) {
-            const user = await this.UserModel.findOne({login: dto.login})
-            if (!user) throw new UnauthorizedException('Пользователь не найден :(')
-            const isValidPassword = await compare(dto.password, user.password)
-            if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
-            return user
-        }
+    async validateUser(dto: LoginAuthDto) {
+        const user = await this.UserModel.findOne({$or : [{login: dto.EmailorLogin}, {email: dto.EmailorLogin}]})
+        if (!user) throw new UnauthorizedException('Пользователь не найден :(')
+        const isValidPassword = await compare(dto.password, user.password)
+        if (!isValidPassword) throw new UnauthorizedException('Не правильный пароль')
+        return user
     }
 
     async issueTokenPair(_id: string) {

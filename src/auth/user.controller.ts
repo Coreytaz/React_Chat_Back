@@ -30,7 +30,7 @@ export class UserController {
     )
     async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File, @Res() res) {
       if (!file) {
-        return res.status(404).json({message: "Не удалось получить файл"})
+        return res.status(404).json({error: "Error",message: "Не удалось получить файл"})
       }
         this.userService.setAvatar(req, `${this.SERVER_URL}${file.path}`, file, res);
     }
@@ -48,7 +48,7 @@ export class UserController {
     @HttpCode(200)
     @Patch('/me')
     async update(@Req() req, @Body() updateDto: UpdateAuthDto) {
-        this.userService.updateUser(req, updateDto);
+      return this.userService.updateUser(req, updateDto);
      }
 
     @UseGuards(JwtAuthGuard)

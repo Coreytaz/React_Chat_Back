@@ -39,7 +39,7 @@ export class UserService {
 
     async updateUser(req, updateDto: UpdateAuthDto) {
         const user = {username: updateDto.username, email: updateDto.email}
-        return await this.UserModel.findByIdAndUpdate(req.user._id, user)
+        return await this.authService.returnUserField(await this.UserModel.findByIdAndUpdate(req.user._id, user))
     }
 
     async search(dto: SearchUserDto) {
