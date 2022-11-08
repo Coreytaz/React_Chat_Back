@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { UserModel } from '../user/user.model';
 import { ModelType } from '@typegoose/typegoose/lib/types';
@@ -6,6 +6,7 @@ import { AuthService } from './auth.service'
 import * as fs from 'fs'
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
+import { Schema } from 'mongoose';
 
 const regex = (string: string):RegExp => {
     return new RegExp(`^${string}`,"g");
@@ -42,18 +43,27 @@ export class UserService {
         return await this.authService.returnUserField(await this.UserModel.findByIdAndUpdate(req.user._id, user))
     }
 
-    async search(dto: SearchUserDto) {
+    async search(dto: SearchUserDto, req) {
+        console.log(req.user)
         if (dto.email || dto.username) {
-            const qb = await this.UserModel.find({$or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, email: true, avatar: true, _id: false}).limit(dto.limit || 10)
+            const qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, email: true, avatar: true}).limit(dto.limit || 10)
             return {
                 items: qb,
                 total: qb.length
             }
         }
-        const qb = await this.UserModel.find({}, {username: true, email: true, avatar: true, _id: false}).limit(dto.limit || 10)
+        const qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, email: true, avatar: true}).limit(dto.limit || 10)
         return {
             items: qb,
             total: qb.length
         }
     }
+
+    async getUser(_id: Schema.Types.ObjectId) {
+        const user = await this.UserModel.findById(_id, {username: true, avatar: true})
+        if (!user) {
+            throw new BadRequestException('Ошибка чата')
+        }
+        return user
+      }
 }

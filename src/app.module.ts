@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { getMongoConfig } from './config/mongo.config';
-import { ChatGateway } from './chat/chat.gateway';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -15,8 +15,10 @@ import { ChatGateway } from './chat/chat.gateway';
       inject: [ConfigService],
       useFactory: getMongoConfig,
     }),
-    AuthModule],
+    AuthModule,
+    ChatModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, ChatGateway],
+  providers: [AppService],
 })
 export class AppModule {}

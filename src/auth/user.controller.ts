@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, Res, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, UsePipes,ValidationPipe } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { UserService } from './user.service'
 import { diskStorage } from  'multer';
@@ -6,6 +6,8 @@ import { extname } from  'path';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
+import { UserModel } from 'src/user/user.model';
+import { ObjectId } from 'mongoose';
 
 @Controller('user')
 export class UserController {
@@ -55,12 +57,19 @@ export class UserController {
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Get('/search')
-    async search(@Query() dto: SearchUserDto): Promise<any> {
-      return this.userService.search(dto)
+    async search(@Query() dto: SearchUserDto, @Req() req): Promise<{items: UserModel[] ,total: number}> {
+      return this.userService.search(dto, req)
     }
 
     @Get('avatars/:fileId')
     async serveAvatar(@Param('fileId') fileId, @Res() res): Promise<any> {
     res.sendFile(fileId, { root: 'avatars'});
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Get('getUser')
+  async getUsers(@Query() sel: ObjectId) {
+      return this.userService.getUser(sel)
   }
 }

@@ -2,7 +2,7 @@ import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSo
 import { Server, Socket } from 'socket.io';
 
 
-@WebSocketGateway({ cors: true, namespace: 'chat' })
+@WebSocketGateway({ cors: true, namespace: 'chat', credentials: true})
 export class ChatGateway {
   @WebSocketServer() server: Server;
 
