@@ -44,7 +44,6 @@ export class UserService {
     }
 
     async search(dto: SearchUserDto, req) {
-        console.log(req.user)
         if (dto.email || dto.username) {
             const qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, email: true, avatar: true}).limit(dto.limit || 10)
             return {
