@@ -14,23 +14,25 @@ export class ChatGateway {
  @SubscribeMessage('SEND-MESG')
  async handleSendMessage(client: Socket, payload: addMessageDto): Promise<void> {
   const sendUserSocket = online.get(payload.to)
-  console.log(payload)
-  if (sendUserSocket) {
-   await this.ChatService.addMessage(payload);
-   this.server.to(sendUserSocket).emit('MESG-RECIEVE', payload.message)
-
-  }
+  await this.ChatService.addMessage(payload);
+  this.server.to(sendUserSocket).emit('MESG-RECIEVE', payload.message)
  }
 
- handleConnection(client: Socket, ...args: any[]) {
+ handleConnection(client: Socket) {
   console.log(`Connected ${client.id}`);
-  console.log(online)
+}
+
+handleDisconnect(client: Socket) {
+  online.forEach((value, _id) => {
+    if (value === client.id) {
+      online.delete(_id)
+    }
+})
+  console.log(`Disconnected: ${client.id}`);
 }
 
  @SubscribeMessage('ADD-USER')
  async addUser(client: Socket, _id: ObjectId) {
-  console.log(_id)
   online.set(_id, client.id);
-  console.log(online)
  }
 }
