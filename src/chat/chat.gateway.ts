@@ -1,4 +1,4 @@
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { ObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { addMessageDto } from './chat.dto';
@@ -28,11 +28,15 @@ handleDisconnect(client: Socket) {
       online.delete(_id)
     }
 })
+  const users = [...online.keys()]
+  this.server.emit('ADD-USER-STATUS', users)
   console.log(`Disconnected: ${client.id}`);
 }
 
  @SubscribeMessage('ADD-USER')
  async addUser(client: Socket, _id: ObjectId) {
   online.set(_id, client.id);
+  const users = [...online.keys()]
+  await this.server.emit('ADD-USER-STATUS', users)
  }
 }
