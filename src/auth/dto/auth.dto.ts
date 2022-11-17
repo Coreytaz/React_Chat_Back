@@ -7,19 +7,25 @@ export class CreateAuthDto {
     @IsEmail({}, {
         message: 'Не правильный E-mail'
     })
-    @IsNotEmpty()
+    @IsNotEmpty({
+        message: 'E-mail не должен быть пустым!'
+    })
     email: string;
 
     @ValidateIf((_, v) => {
         return v !== undefined
     })
-    @IsNotEmpty()
+    @IsNotEmpty({
+        message: 'Логин не должен быть пустым!'
+    })
     @MinLength(3, {
         message: 'Логин должен содержать не менее 3 символов!'
     })
     login: string;
 
-    @IsNotEmpty()
+    @IsNotEmpty({
+        message: 'Пароль не должен быть пустым!'
+    })
     @MinLength(6, {
         message: 'Пароль должен содержать не менее 6 символов!'
     })

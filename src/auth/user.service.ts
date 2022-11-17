@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { UserModel } from '../user/user.model';
 import { ModelType } from '@typegoose/typegoose/lib/types';
@@ -61,7 +61,7 @@ export class UserService {
     async getUser(_id: Schema.Types.ObjectId) {
         const user = await this.UserModel.findById(_id, {username: true, avatar: true})
         if (!user) {
-            throw new BadRequestException('Ошибка чата')
+            throw new UnauthorizedException('Ошибка чата')
         }
         return user
       }

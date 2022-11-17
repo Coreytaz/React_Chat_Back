@@ -13,9 +13,11 @@ export class ChatGateway {
 
  @SubscribeMessage('SEND-MESG')
  async handleSendMessage(client: Socket, payload: addMessageDto): Promise<void> {
-  const sendUserSocket = online.get(payload.to)
-  await this.ChatService.addMessage(payload);
-  this.server.to(sendUserSocket).emit('MESG-RECIEVE', payload.message)
+  const sendUserSocketTo = online.get(payload.to)
+  if (sendUserSocketTo) {
+    this.server.to(String(payload.to)).emit('MESG-RECIEVE', {...payload})
+  }
+  await this.ChatService.addMessage(payload)
  }
 
  handleConnection(client: Socket) {
@@ -35,6 +37,7 @@ handleDisconnect(client: Socket) {
 
  @SubscribeMessage('ADD-USER')
  async addUser(client: Socket, _id: ObjectId) {
+  client.join(String(_id))
   online.set(_id, client.id);
   const users = [...online.keys()]
   await this.server.emit('ADD-USER-STATUS', users)
