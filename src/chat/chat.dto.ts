@@ -19,3 +19,12 @@ export class getMessageDto {
     @IsNotEmpty()
     to: ObjectId;
 }
+
+
+export class MessageUpdatePayload {
+    @IsNotEmpty()
+    id: ObjectId;
+
+    @IsNotEmpty()
+    message: string;
+}

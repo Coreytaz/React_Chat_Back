@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModelType } from '@typegoose/typegoose/lib/types';
+import { Schema } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
-import { addMessageDto, getMessageDto } from './chat.dto';
+import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model'
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ChatService {
         .sort({updateAt: 1})
         const projectMessages = messages.map((msg) => {
             return {
+                id: msg._id,
                 fromSelf: msg.sender.toString() === (dto.from as unknown) as string,
                 message: msg.message,
             };
@@ -34,5 +36,17 @@ export class ChatService {
             throw new BadRequestException('Ошибка отправки сообщения')
         }
        return await newMessage
+    }
+    async updateMessage(payload: MessageUpdatePayload) {
+        const { id, message } = payload;
+        await this.ChatModel.findByIdAndUpdate(id, {message});
+        const updatedMessage = await this.ChatModel.findById(id);
+        return updatedMessage
+    }
+    async removeMessage(payload: Schema.Types.ObjectId) {
+        return this.ChatModel.findByIdAndDelete(payload)
+    }
+    async clearMessages(dto: getMessageDto) {
+        await this.ChatModel.deleteMany({$and: [{"users.0": [dto.from, dto.to]}, {"users.1": [dto.from, dto.to]}, {"sender.0": [dto.from]}]})
     }
 }
