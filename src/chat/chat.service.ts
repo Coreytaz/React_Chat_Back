@@ -9,20 +9,20 @@ import { ChatModel } from './chat.model'
 export class ChatService {
     constructor(@InjectModel(ChatModel) private readonly ChatModel: ModelType<ChatModel>){}
 
-    async getAllMessages(dto: getMessageDto) {
+    async getAllMessages(dto: getMessageDto, page:number, limit: number) {
         const messages = await this.ChatModel.find({
             users: {
                 $all: [dto.from, dto.to],
             },
-        })
-        .sort({updateAt: 1})
+        }).sort({$natural:-1}).limit(limit).skip(page*limit)
+
         const projectMessages = messages.map((msg) => {
             return {
                 id: msg._id,
                 fromSelf: msg.sender.toString() === (dto.from as unknown) as string,
                 message: msg.message,
             };
-        })
+        }).reverse()
         return projectMessages
     }
     async addMessage(dto: addMessageDto) {
