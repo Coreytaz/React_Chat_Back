@@ -50,7 +50,6 @@ export class AuthService {
     }
 
     async refresh(req, res: Response) {
-        console.log(123)
         const dto = req.user
 
         const {accessToken} = await this.issueTokenPair(String(dto._id))
