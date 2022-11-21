@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Res, UnauthorizedException } from '@nestjs/common';
+import { Response } from 'express'
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ModelType} from '@typegoose/typegoose/lib/types'
@@ -11,18 +12,19 @@ import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 export class AuthService {
     constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly jwtService: JwtService, private readonly configService: ConfigService){}
 
-    async login(dto: LoginAuthDto) {
+    async login(dto: LoginAuthDto, res: Response) {
         const user = await this.validateUser(dto)
 
-        const tokens = await this.issueTokenPair(String(user._id))
+        const {accessToken} = await this.issueTokenPair(String(user._id))
+
+        res.cookie('token', accessToken, { httpOnly: true, secure: true });
 
         return {
             user: this.returnUserField(user),
-            ...tokens,
         }
     }
 
-    async register(dto: CreateAuthDto) {
+    async register(dto: CreateAuthDto, res: Response) {
         const oldEmail = await this.UserModel.findOne({email: dto.email})
         if (oldEmail) throw new BadRequestException('Пользователь с таким E-mail или Логином есть в системе')
 
@@ -37,26 +39,31 @@ export class AuthService {
 
         const user = await newUser
 
-        const tokens = await this.issueTokenPair(String(user._id))
+        const {accessToken} = await this.issueTokenPair(String(user._id))
+
+        res.cookie('token', accessToken, { httpOnly: true, secure: true});
+
 
         return {
-            user: this.returnUserField(user),
-            ...tokens,
+            user: this.returnUserField(user)
         }
     }
 
-    async refresh(req) {
+    async refresh(req, res: Response) {
+        console.log(123)
         const dto = req.user
 
-        const tokens = await this.issueTokenPair(String(dto._id))
+        const {accessToken} = await this.issueTokenPair(String(dto._id))
+
+        res.cookie('token', accessToken, { httpOnly: true, secure: true });
 
         return {
             user: this.returnUserField(dto),
-            ...tokens,
         }
     }
 
     async logout(res: Response) {
+        res.clearCookie('token')
         return res.json();
     }
 
