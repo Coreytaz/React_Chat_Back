@@ -1,6 +1,7 @@
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { ObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
+import { RequestFriendsDto } from 'src/auth/dto/user.dto';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatService } from './chat.service'
 
@@ -67,5 +68,24 @@ async handleMessageDelete(
 async handleMessagesClear(@MessageBody() dto: getMessageDto): Promise<void> {
   await this.ChatService.clearMessages(dto);
   this.server.emit("messages:clear-recieve")
+}
+
+@SubscribeMessage("reguest:user")
+async handleRequestFriends(@MessageBody() dto: RequestFriendsDto): Promise<void> {
+  const sendUserSocketTo = online.get(dto.taker)
+  const request = await this.ChatService.requestFriends(dto);
+  if (sendUserSocketTo) {
+    this.server.to(sendUserSocketTo).emit("reguest:user-recieve", {request})
+
+  }
+}
+
+@SubscribeMessage("accept:user")
+async handleAcceptFriends(@MessageBody() dto: RequestFriendsDto): Promise<void> {
+  const sendUserSocketTo = online.get(dto.sender)
+  const request = await this.ChatService.acceptFriends(dto);
+  if (sendUserSocketTo) {
+    this.server.to(sendUserSocketTo).emit("accept:user-recieve", {request})
+  }
 }
 }

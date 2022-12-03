@@ -8,6 +8,8 @@ import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
 import { UserModel } from 'src/user/user.model';
 import { ObjectId } from 'mongoose';
+import { Request } from 'express'
+
 
 @Controller('user')
 export class UserController {
@@ -57,7 +59,8 @@ export class UserController {
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Get('/search')
-    async search(@Query() dto: SearchUserDto, @Req() req): Promise<{items: UserModel[] ,total: number}> {
+    async search(@Query() dto: SearchUserDto, @Req() req)
+    {
       return this.userService.search(dto, req)
     }
 
@@ -71,5 +74,19 @@ export class UserController {
   @Get('getUser')
   async getUsers(@Query() sel: ObjectId) {
       return this.userService.getUser(sel)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Get('getReguestUser')
+  async getRequestUser(@Req() req: Request) {
+      return this.userService.getRequestUser(req)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Get('getFriends')
+  async getFriends(@Req() req: Request) {
+      return this.userService.getFriends(req)
   }
 }

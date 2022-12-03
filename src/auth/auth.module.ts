@@ -11,6 +11,8 @@ import { UserController } from './user.controller';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from 'src/strategies/local.strategy';
 import { JwtStrategy } from 'src/strategies/jwt.strategy';
+import { ReguestsModel } from 'src/user/reguests.model';
+import { FrinendsModel } from 'src/user/friends.model';
 
 @Module({
   imports: [TypegooseModule.forFeature([
@@ -18,6 +20,16 @@ import { JwtStrategy } from 'src/strategies/jwt.strategy';
       typegooseClass: UserModel,
       schemaOptions: {
         collection: 'User'
+      }
+    },{
+      typegooseClass: ReguestsModel,
+      schemaOptions: {
+        collection: 'Reguests'
+      }
+    },{
+      typegooseClass: FrinendsModel,
+      schemaOptions: {
+        collection: 'Frinends'
       }
     }
   ]),

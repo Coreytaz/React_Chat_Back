@@ -6,7 +6,11 @@ import { AuthService } from './auth.service'
 import * as fs from 'fs'
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
+import { Request } from 'express';
+import { ReguestsModel } from 'src/user/reguests.model';
+import { FrinendsModel } from 'src/user/friends.model';
+
 
 const regex = (string: string):RegExp => {
     return new RegExp(`^${string}`,"g");
@@ -14,7 +18,11 @@ const regex = (string: string):RegExp => {
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>, private readonly authService: AuthService) { }
+    constructor(
+    @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>,
+    private readonly authService: AuthService,
+    @InjectModel(ReguestsModel) private readonly ReguestsModel: ModelType<ReguestsModel>,
+    @InjectModel(FrinendsModel) private readonly FrinendsModel: ModelType<FrinendsModel>) { }
 
     async setAvatar(req, avatarUrl: string, file: Express.Multer.File, res) {
         const userData = req.user
@@ -44,17 +52,34 @@ export class UserService {
     }
 
     async search(dto: SearchUserDto, req) {
-        if (dto.email || dto.username) {
-            const qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, email: true, avatar: true}).limit(dto.limit || 10)
-            return {
-                items: qb,
-                total: qb.length
+        const friends = await (await this.getFriends(req)).map(friend => String(friend._id)) as string[]
+        console.log(friends)
+        // if (dto.email || dto.username) {
+        //     const qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, avatar: true}).limit(dto.limit || 10)
+        //     return {
+        //         items: qb,
+        //         total: qb.length
+        //     }
+        // }
+        const qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, avatar: true}).limit(dto.limit || 10)
+
+        const filterUser = qb.map((user) => {
+            console.log(user, friends)
+            console.log(friends.indexOf(String(user._id)) !== -1)
+            if (friends.includes(String(user._id))) {
+                return {
+                    ...user.toJSON(),
+                    friends: true,
+                }
             }
-        }
-        const qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, email: true, avatar: true}).limit(dto.limit || 10)
+            return user
+        })
+
+        console.log(filterUser)
+
         return {
-            items: qb,
-            total: qb.length
+            items: filterUser,
+            total: filterUser.length
         }
     }
 
@@ -65,4 +90,30 @@ export class UserService {
         }
         return user
       }
+
+    async  getRequestUser(req: Request) {
+        const { _id } = req.user as any
+        const request = await this.ReguestsModel.find({taker: _id, accept: 0}, {sender: true})
+        const user = []
+        for (let i = 0; i < request.length; i++) {
+            user.push(await this.UserModel.findById(request[i].sender, {username: true, avatar: true}))
+        }
+        return user;
+    }
+
+    async getFriends(req: Request) {
+        const { _id } = req.user as any
+        const frinends = await this.FrinendsModel.find({$or:[{id1: _id}, {id2: _id}]})
+        const user = []
+        for (let i = 0; i < frinends.length; i++) {
+            const id1 = frinends[i].id1
+            const id2 = frinends[i].id2
+            if (String(id1) === String(_id)) {
+                user.push(await this.UserModel.findById(id2, {username: true, avatar: true}))
+            } else {
+                user.push(await this.UserModel.findById(id1, {username: true, avatar: true}))
+            }
+        }
+        return user
+    }
 }
