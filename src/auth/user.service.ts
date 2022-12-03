@@ -53,19 +53,13 @@ export class UserService {
 
     async search(dto: SearchUserDto, req) {
         const friends = await (await this.getFriends(req)).map(friend => String(friend._id)) as string[]
-        console.log(friends)
-        // if (dto.email || dto.username) {
-        //     const qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, avatar: true}).limit(dto.limit || 10)
-        //     return {
-        //         items: qb,
-        //         total: qb.length
-        //     }
-        // }
-        const qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, avatar: true}).limit(dto.limit || 10)
-
+        let qb = []
+        if (dto.email || dto.username) {
+            qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, avatar: true}).limit(dto.limit || 10)
+        } else {
+        qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, avatar: true}).limit(dto.limit || 10)
+        }
         const filterUser = qb.map((user) => {
-            console.log(user, friends)
-            console.log(friends.indexOf(String(user._id)) !== -1)
             if (friends.includes(String(user._id))) {
                 return {
                     ...user.toJSON(),
@@ -74,8 +68,6 @@ export class UserService {
             }
             return user
         })
-
-        console.log(filterUser)
 
         return {
             items: filterUser,
