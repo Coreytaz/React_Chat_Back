@@ -17,7 +17,7 @@ export class AuthService {
 
         const {accessToken} = await this.issueTokenPair(String(user._id))
 
-        res.cookie('token', accessToken, {});
+        res.cookie('token', accessToken, { httpOnly: true, secure: true });
 
         return {
             user: this.returnUserField(user),
