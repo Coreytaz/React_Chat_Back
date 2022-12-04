@@ -6,7 +6,7 @@ import { AuthService } from './auth.service'
 import * as fs from 'fs'
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { Schema, Types } from 'mongoose';
+import { Schema } from 'mongoose';
 import { Request } from 'express';
 import { ReguestsModel } from 'src/user/reguests.model';
 import { FrinendsModel } from 'src/user/friends.model';
@@ -52,7 +52,7 @@ export class UserService {
     }
 
     async search(dto: SearchUserDto, req) {
-        const friends = await (await this.getFriends(req)).map(friend => String(friend._id)) as string[]
+        const request = await (await this.getRequest(req)).map(friend => String(friend._id)) as string[]
         let qb = []
         if (dto.email || dto.username) {
             qb = await this.UserModel.find({_id : { $ne:req.user._id }, $or : [{username: regex(dto.username)}, {email: regex(dto.email)}]}, {username: true, avatar: true}).limit(dto.limit || 10)
@@ -60,7 +60,7 @@ export class UserService {
         qb = await this.UserModel.find({_id : { $ne:req.user._id }}, {username: true, avatar: true}).limit(dto.limit || 10)
         }
         const filterUser = qb.map((user) => {
-            if (friends.includes(String(user._id))) {
+            if (request.includes(String(user._id))) {
                 return {
                     ...user.toJSON(),
                     friends: true,
@@ -89,6 +89,22 @@ export class UserService {
         const user = []
         for (let i = 0; i < request.length; i++) {
             user.push(await this.UserModel.findById(request[i].sender, {username: true, avatar: true}))
+        }
+        return user;
+    }
+
+    async  getRequest(req: Request) {
+        const { _id } = req.user as any
+        const request = await this.ReguestsModel.find({$or:[{sender: _id}, {taker: _id}]})
+        const user = []
+        for (let i = 0; i < request.length; i++) {
+            const id1 = request[i].sender
+            const id2 = request[i].taker
+            if (String(id1) === String(_id)) {
+                user.push(await this.UserModel.findById(id2, {username: true, avatar: true}))
+            } else {
+                user.push(await this.UserModel.findById(id1, {username: true, avatar: true}))
+            }
         }
         return user;
     }
