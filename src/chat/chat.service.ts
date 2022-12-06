@@ -25,6 +25,8 @@ export class ChatService {
                 id: msg._id,
                 fromSelf: msg.sender.toString() === (dto.from as unknown) as string,
                 message: msg.message,
+                createdAt: msg.createdAt,
+                updatedAt: msg.updatedAt
             };
         }).reverse()
         return projectMessages
