@@ -10,6 +10,8 @@ export class addMessageDto {
 
     @IsNotEmpty()
     to: ObjectId;
+
+    voiceMessage?: string;
 }
 
 export class getMessageDto {

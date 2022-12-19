@@ -16,4 +16,6 @@ export class ChatModel extends TimeStamps {
     @prop({ type: () => UserModel, ref: 'User', require: true})
     sender: UserModel[];
 
+    @prop({default: null})
+    voiceMessage?: string
 }

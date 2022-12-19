@@ -7,6 +7,7 @@ import { ReguestsModel } from 'src/user/reguests.model';
 import { FrinendsModel } from 'src/user/friends.model';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model'
+import * as fs from 'fs'
 
 @Injectable()
 export class ChatService {
@@ -26,7 +27,8 @@ export class ChatService {
                 fromSelf: msg.sender.toString() === (dto.from as unknown) as string,
                 message: msg.message,
                 createdAt: msg.createdAt,
-                updatedAt: msg.updatedAt
+                updatedAt: msg.updatedAt,
+                voiceMessage: msg.voiceMessage
             };
         }).reverse()
         return projectMessages
@@ -36,6 +38,7 @@ export class ChatService {
             message: dto.message,
             users: [dto.from, dto.to],
             sender: dto.from,
+            voiceMessage: dto.voiceMessage
         });
         (await newMessage).save()
         if (!newMessage) {
@@ -50,7 +53,11 @@ export class ChatService {
         return updatedMessage
     }
     async removeMessage(payload: Schema.Types.ObjectId) {
-        return this.ChatModel.findByIdAndDelete(payload)
+        const msg = await this.ChatModel.findByIdAndDelete(payload)
+        if (msg.voiceMessage) {
+            this.deleteRecordMessage(msg.voiceMessage)
+        }
+        return msg
     }
     async clearMessages(dto: getMessageDto) {
         await this.ChatModel.deleteMany({$and: [{"users.0": [dto.from, dto.to]}, {"users.1": [dto.from, dto.to]}, {"sender.0": [dto.from]}]})
@@ -83,4 +90,8 @@ export class ChatService {
         }
         return await oldRequest
       }
+
+    deleteRecordMessage(urlMsg: string):void {
+        fs.unlinkSync(urlMsg.split('/').at(-1))
+    }
 }

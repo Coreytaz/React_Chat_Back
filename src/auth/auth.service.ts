@@ -17,7 +17,7 @@ export class AuthService {
 
         const {accessToken} = await this.issueTokenPair(String(user._id))
 
-        res.cookie('token', accessToken, { httpOnly: true, secure: true });
+        res.cookie('token', accessToken, {});
 
         return {
             user: this.returnUserField(user),
@@ -54,7 +54,7 @@ export class AuthService {
 
         const {accessToken} = await this.issueTokenPair(String(dto._id))
 
-        res.cookie('token', accessToken, { httpOnly: true, secure: true });
+        res.cookie('token', accessToken, { });
 
         return {
             user: this.returnUserField(dto),
