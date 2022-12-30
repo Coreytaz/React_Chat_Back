@@ -94,4 +94,8 @@ export class ChatService {
     deleteRecordMessage(urlMsg: string):void {
         fs.unlinkSync(urlMsg.split('/').at(-1))
     }
+
+    deleteFile(file: string):void {
+        fs.unlinkSync(file)
+    }
 }
