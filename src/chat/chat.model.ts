@@ -18,4 +18,7 @@ export class ChatModel extends TimeStamps {
 
     @prop({default: null})
     voiceMessage?: string
+
+    @prop({default: []})
+    attachments?: [{id: string, url: string}]
 }

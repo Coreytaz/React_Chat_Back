@@ -70,7 +70,6 @@ export class ChatController {
 
     @Get('file/:fileId')
     async getFile(@Param('fileId') fileId, @Res() res: Response): Promise<void> {
-        console.log(fileId)
         res.sendFile(fileId, { root: 'file'});
     }
 

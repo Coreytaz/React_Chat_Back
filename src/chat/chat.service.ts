@@ -28,7 +28,8 @@ export class ChatService {
                 message: msg.message,
                 createdAt: msg.createdAt,
                 updatedAt: msg.updatedAt,
-                voiceMessage: msg.voiceMessage
+                voiceMessage: msg.voiceMessage,
+                attachments: msg.attachments
             };
         }).reverse()
         return projectMessages
@@ -38,7 +39,8 @@ export class ChatService {
             message: dto.message,
             users: [dto.from, dto.to],
             sender: dto.from,
-            voiceMessage: dto.voiceMessage
+            voiceMessage: dto.voiceMessage,
+            attachments: dto.attachments
         });
         (await newMessage).save()
         if (!newMessage) {
@@ -54,8 +56,13 @@ export class ChatService {
     }
     async removeMessage(payload: Schema.Types.ObjectId) {
         const msg = await this.ChatModel.findByIdAndDelete(payload)
-        if (msg.voiceMessage) {
+        if (msg.voiceMessage !== null) {
             this.deleteRecordMessage(msg.voiceMessage)
+        }
+        if (msg.attachments.length > 0) {
+            msg.attachments.forEach((file) => {
+                this.deleteFile(file.url)
+            })
         }
         return msg
     }
@@ -96,6 +103,6 @@ export class ChatService {
     }
 
     deleteFile(file: string):void {
-        fs.unlinkSync(file)
+        fs.unlinkSync(file.split('/').at(-1))
     }
 }

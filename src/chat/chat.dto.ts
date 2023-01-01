@@ -11,6 +11,9 @@ export class addMessageDto {
     @IsNotEmpty()
     to: ObjectId;
 
+    @IsNotEmpty()
+    attachments: [{id: string, url: string}];
+
     voiceMessage?: string;
 }
 
