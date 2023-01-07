@@ -49,8 +49,8 @@ export class ChatService {
        return await newMessage
     }
     async updateMessage(payload: MessageUpdatePayload) {
-        const { id, message } = payload;
-        await this.ChatModel.findByIdAndUpdate(id, {message});
+        const { id, message, attachments } = payload;
+        await this.ChatModel.findByIdAndUpdate(id, {message, attachments});
         const updatedMessage = await this.ChatModel.findById(id);
         return updatedMessage
     }

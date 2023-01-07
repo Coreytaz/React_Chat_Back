@@ -32,4 +32,7 @@ export class MessageUpdatePayload {
 
     @IsNotEmpty()
     message: string;
+
+    @IsNotEmpty()
+    attachments: [{id: string, url: string}];
 }
