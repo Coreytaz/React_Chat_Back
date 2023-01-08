@@ -61,7 +61,12 @@ export class ChatService {
         }
         if (msg.attachments.length > 0) {
             msg.attachments.forEach((file) => {
-                this.deleteFile(file.url)
+                try {
+                    this.deleteFile(file.url)
+                }
+                catch (e) {
+                    return
+                }
             })
         }
         return msg
