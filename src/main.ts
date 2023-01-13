@@ -7,9 +7,11 @@ async function bootstrap() {
     const PORT = process.env.PORT || 5000;
     const app = await NestFactory.create(AppModule);
     app.enableCors({
-      origin: "https://react-chat-back.vercel.app",
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      credentials: true,
+      origin: "*",
+      methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+      credentials: true
     });
     app.setGlobalPrefix('api');
     app.use(cookieParser());
