@@ -1,5 +1,4 @@
 {
-    "installCommand": "npm install --force",
     "version": 2,
     "env": {
         "NODE_ENV" : "development",
@@ -9,8 +8,7 @@
     },
     "builds": [
         {
-            "src": "src/main.ts",
-            "use": "@vercel/node"
+            "src": "src/main.ts"
         }
     ],
     "routes": [
