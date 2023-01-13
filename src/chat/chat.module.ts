@@ -16,26 +16,31 @@ import { ChatService } from './chat.service';
       {
         typegooseClass: ChatModel,
         schemaOptions: {
-          collection: 'Chat'
-        }
-      },{
+          collection: 'Chat',
+        },
+      },
+      {
         typegooseClass: UserModel,
         schemaOptions: {
-          collection: 'User'
-        }
-      },{
+          collection: 'User',
+        },
+      },
+      {
         typegooseClass: ReguestsModel,
         schemaOptions: {
-          collection: 'Reguests'
-        }
-      },{
+          collection: 'Reguests',
+        },
+      },
+      {
         typegooseClass: FrinendsModel,
         schemaOptions: {
-          collection: 'Frinends'
-        }
-      }
-    ]), ConfigModule],
+          collection: 'Frinends',
+        },
+      },
+    ]),
+    ConfigModule,
+  ],
   providers: [ChatGateway, ChatService, JwtStrategy],
-  controllers: [ChatController]
+  controllers: [ChatController],
 })
 export class ChatModule {}

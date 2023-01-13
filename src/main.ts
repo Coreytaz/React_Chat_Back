@@ -10,9 +10,9 @@ async function bootstrap() {
       origin: true,
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
-  });
+    });
     app.setGlobalPrefix('api');
-    app.use(cookieParser())
+    app.use(cookieParser());
 
     await app.listen(PORT, () => console.log(`server started on PORT ${PORT}`));
   } catch (error) {

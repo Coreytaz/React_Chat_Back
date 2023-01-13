@@ -16,21 +16,22 @@ const cookieExtractor = (req) => {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService, @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>) {
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>,
+  ) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        cookieExtractor
-      ]),
+      jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_SECRET'),
     });
   }
 
   async validate(payload: any) {
-    const user = await this.UserModel.findById(payload._id)
+    const user = await this.UserModel.findById(payload._id);
 
     if (!user) {
-      throw new UnauthorizedException('У вас нету доступа к этой странице')
+      throw new UnauthorizedException('У вас нету доступа к этой странице');
     }
     return user;
   }

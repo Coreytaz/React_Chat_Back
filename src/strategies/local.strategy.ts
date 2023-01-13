@@ -5,18 +5,21 @@ import { LoginAuthDto } from '../auth/dto/auth.dto';
 import { Strategy } from 'passport-local';
 import { UserModel } from 'src/user/user.model';
 
-
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-      super({ usernameField: 'EmailorLogin' , passReqToCallback: true});
+    super({ usernameField: 'EmailorLogin', passReqToCallback: true });
   }
 
-  async validate(req: Express.Request, EmailorLogin: string, password: string): Promise<UserModel> {
-    const dto = {EmailorLogin, password} as LoginAuthDto
-    const user = this.authService.validateUser(dto)
+  async validate(
+    req: Express.Request,
+    EmailorLogin: string,
+    password: string,
+  ): Promise<UserModel> {
+    const dto = { EmailorLogin, password } as LoginAuthDto;
+    const user = this.authService.validateUser(dto);
     if (!user) {
-      throw new UnauthorizedException({message:"Пользователь не найден :("});
+      throw new UnauthorizedException({ message: 'Пользователь не найден :(' });
     }
     return user;
   }

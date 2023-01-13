@@ -15,33 +15,36 @@ import { ReguestsModel } from 'src/user/reguests.model';
 import { FrinendsModel } from 'src/user/friends.model';
 
 @Module({
-  imports: [TypegooseModule.forFeature([
-    {
-      typegooseClass: UserModel,
-      schemaOptions: {
-        collection: 'User'
-      }
-    },{
-      typegooseClass: ReguestsModel,
-      schemaOptions: {
-        collection: 'Reguests'
-      }
-    },{
-      typegooseClass: FrinendsModel,
-      schemaOptions: {
-        collection: 'Frinends'
-      }
-    }
-  ]),
-  ConfigModule,
-  JwtModule.registerAsync({
-    imports: [ConfigModule],
-    inject: [ConfigService],
-    useFactory: getJwtConfig
-  }),
-  PassportModule
-],
+  imports: [
+    TypegooseModule.forFeature([
+      {
+        typegooseClass: UserModel,
+        schemaOptions: {
+          collection: 'User',
+        },
+      },
+      {
+        typegooseClass: ReguestsModel,
+        schemaOptions: {
+          collection: 'Reguests',
+        },
+      },
+      {
+        typegooseClass: FrinendsModel,
+        schemaOptions: {
+          collection: 'Frinends',
+        },
+      },
+    ]),
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: getJwtConfig,
+    }),
+    PassportModule,
+  ],
   providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
-  controllers: [AuthController, UserController]
+  controllers: [AuthController, UserController],
 })
 export class AuthModule {}
