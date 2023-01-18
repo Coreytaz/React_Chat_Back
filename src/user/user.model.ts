@@ -1,22 +1,29 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
+import { BaseEntity, Column, CreateDateColumn, Entity, ObjectID, ObjectIdColumn, Unique, UpdateDateColumn } from 'typeorm';
 
-export interface UserModel extends Base {}
+@Entity()
+@Unique(['_id', 'email', 'login'])
+export class UserModel extends BaseEntity {
+  @ObjectIdColumn()
+  _id:ObjectID;
 
-export class UserModel extends TimeStamps {
-  @prop({ unique: true })
+  @Column()
   email: string;
 
-  @prop({ unique: true })
+  @Column()
   login: string;
 
-  @prop({ default: null })
+  @Column({nullable: true})
   avatar: string;
 
-  @prop()
+  @Column()
   username: string;
 
-  @prop()
+  @Column()
   password: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

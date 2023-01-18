@@ -1,28 +1,30 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
-import { mongoose, prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
-import { ObjectId } from 'mongoose';
 import { UserModel } from 'src/user/user.model';
+import { BaseEntity, Column, CreateDateColumn, Entity, ObjectID, ObjectIdColumn, OneToMany,UpdateDateColumn } from 'typeorm';
 
-export interface ChatModel extends Base {}
+@Entity()
+export class ChatModel extends BaseEntity {
+  @ObjectIdColumn()
+  _id:ObjectID;
 
-export class ChatModel extends TimeStamps {
-  @prop({ require: true })
+  @Column()
   message: string;
 
-  @prop({
-    type: () => mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    require: true,
-  })
-  users: [ObjectId];
+  @OneToMany(() => UserModel, user => user._id)
+  users: ObjectID[];
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  sender: UserModel[];
+  @OneToMany(() => UserModel, user => user._id)
+  sender: ObjectID[];
 
-  @prop({ default: null })
+  @Column({ default: null })
   voiceMessage?: string;
 
-  @prop({ default: [] })
+  @Column({ default: [] })
   attachments?: [{ id: string; url: string }];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

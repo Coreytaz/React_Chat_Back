@@ -23,9 +23,9 @@ import { extname } from 'path';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { UserModel } from 'src/user/user.model';
-import { ObjectId } from 'mongoose';
 import { Request } from 'express';
+import { ObjectID } from 'typeorm';
+
 
 @Controller('user')
 export class UserController {
@@ -88,7 +88,8 @@ export class UserController {
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Get('/search')
-  async search(@Query() dto: SearchUserDto, @Req() req) {
+  async search(@Query() dto: any, @Req() req) {
+    console.log(dto)
     return this.userService.search(dto, req);
   }
 
@@ -100,7 +101,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('getUser')
-  async getUsers(@Query() sel: ObjectId) {
+  async getUsers(@Query() sel: ObjectID) {
     return this.userService.getUser(sel);
   }
 

@@ -1,15 +1,15 @@
 import { IsNotEmpty } from 'class-validator';
-import { ObjectId } from 'mongoose';
+import { ObjectID } from 'typeorm';
 
 export class addMessageDto {
   @IsNotEmpty()
   message: string;
 
   @IsNotEmpty()
-  from: ObjectId;
+  from: ObjectID;
 
   @IsNotEmpty()
-  to: ObjectId;
+  to: ObjectID;
 
   @IsNotEmpty()
   attachments: [{ id: string; url: string }];
@@ -19,15 +19,15 @@ export class addMessageDto {
 
 export class getMessageDto {
   @IsNotEmpty()
-  from: ObjectId;
+  from: ObjectID;
 
   @IsNotEmpty()
-  to: ObjectId;
+  to: ObjectID;
 }
 
 export class MessageUpdatePayload {
   @IsNotEmpty()
-  id: ObjectId;
+  id: ObjectID;
 
   @IsNotEmpty()
   message: string;

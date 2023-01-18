@@ -1,5 +1,5 @@
 import { ACEPT_USER } from 'src/user/reguests.model';
-import { UserModel } from 'src/user/user.model';
+import { ObjectID } from 'typeorm';
 
 export class SearchUserDto {
   email?: string;
@@ -8,7 +8,7 @@ export class SearchUserDto {
 }
 
 export class RequestFriendsDto {
-  sender: UserModel;
-  taker: UserModel;
+  sender: ObjectID;
+  taker: ObjectID;
   accept: ACEPT_USER;
 }

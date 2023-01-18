@@ -7,6 +7,7 @@ import {
 import { ObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { RequestFriendsDto } from 'src/auth/dto/user.dto';
+import { ObjectID } from 'typeorm';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatService } from './chat.service';
 
@@ -81,7 +82,7 @@ export class ChatGateway {
   @SubscribeMessage('message:delete')
   async handleMessageDelete(
     @MessageBody()
-    payload: ObjectId, // { id: number }
+    payload: ObjectID, // { id: number }
   ) {
     const removedMessage = await this.ChatService.removeMessage(payload);
     this.server.emit('message:delete-RECIEVE', { removedMessage });

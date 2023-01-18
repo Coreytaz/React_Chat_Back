@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypegooseModule } from 'nestjs-typegoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from 'src/strategies/jwt.strategy';
 import { FrinendsModel } from 'src/user/friends.model';
 import { ReguestsModel } from 'src/user/reguests.model';
@@ -12,32 +12,7 @@ import { ChatService } from './chat.service';
 
 @Module({
   imports: [
-    TypegooseModule.forFeature([
-      {
-        typegooseClass: ChatModel,
-        schemaOptions: {
-          collection: 'Chat',
-        },
-      },
-      {
-        typegooseClass: UserModel,
-        schemaOptions: {
-          collection: 'User',
-        },
-      },
-      {
-        typegooseClass: ReguestsModel,
-        schemaOptions: {
-          collection: 'Reguests',
-        },
-      },
-      {
-        typegooseClass: FrinendsModel,
-        schemaOptions: {
-          collection: 'Frinends',
-        },
-      },
-    ]),
+    TypeOrmModule.forFeature([ChatModel, UserModel, ReguestsModel, FrinendsModel]),
     ConfigModule,
   ],
   providers: [ChatGateway, ChatService, JwtStrategy],

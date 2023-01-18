@@ -1,22 +1,28 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
 import { UserModel } from 'src/user/user.model';
+import { BaseEntity, Column, CreateDateColumn, Entity, ObjectID, ObjectIdColumn, OneToOne, UpdateDateColumn } from 'typeorm';
 
 export enum ACEPT_USER {
   unconfirmed = 0,
   confirmed = 1,
 }
 
-export interface ReguestsModel extends Base {}
+@Entity()
+export class ReguestsModel extends BaseEntity {
+  @ObjectIdColumn()
+  _id:ObjectID;
 
-export class ReguestsModel extends TimeStamps {
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  sender: UserModel;
+  @OneToOne(() => UserModel, user => user._id)
+  sender:ObjectID;
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  taker: UserModel;
+  @OneToOne(() => UserModel, user => user._id)
+  taker:ObjectID;
 
-  @prop({ type: Number, enum: ACEPT_USER, default: [ACEPT_USER.unconfirmed] })
+  @Column({ type: Number, enum: ACEPT_USER, default: [ACEPT_USER.unconfirmed] })
   accept: ACEPT_USER;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

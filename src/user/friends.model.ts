@@ -1,14 +1,22 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
 import { UserModel } from 'src/user/user.model';
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ObjectID, ObjectIdColumn, OneToOne, UpdateDateColumn } from 'typeorm';
 
-export interface FrinendsModel extends Base {}
+@Entity()
+export class FrinendsModel extends BaseEntity {
+  @ObjectIdColumn()
+  _id:ObjectID;
 
-export class FrinendsModel extends TimeStamps {
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  id1: UserModel;
+  @OneToOne(type => UserModel, (user) => user._id)
+  @JoinColumn()
+  id1: ObjectID;
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  id2: UserModel;
+  @OneToOne(type => UserModel, (user) => user._id)
+  @JoinColumn()
+  id2: ObjectID;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

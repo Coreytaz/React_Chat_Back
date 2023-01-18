@@ -1,22 +1,21 @@
 import {
   BadRequestException,
   Injectable,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { ModelType } from '@typegoose/typegoose/lib/types';
 import { compare, genSalt, hash } from 'bcryptjs';
-import { InjectModel } from 'nestjs-typegoose';
+import { InjectRepository  } from '@nestjs/typeorm';
 import { UserModel } from 'src/user/user.model';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>,
+    @InjectRepository(UserModel) private UserModel: Repository<UserModel>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -34,13 +33,15 @@ export class AuthService {
   }
 
   async register(dto: CreateAuthDto, res: Response) {
-    const oldEmail = await this.UserModel.findOne({ email: dto.email });
+    const oldEmail = await this.UserModel.findOne({ where:
+        { email: dto.email }
+    });
     if (oldEmail)
       throw new BadRequestException(
         'Пользователь с таким E-mail или Логином есть в системе',
       );
 
-    const oldLogin = await this.UserModel.findOne({ login: dto.login });
+    const oldLogin = await this.UserModel.findOne({ where: { login: dto.login }});
     if (oldLogin)
       throw new BadRequestException(
         'Пользователь с таким E-mail или Логином есть в системе',
@@ -48,23 +49,20 @@ export class AuthService {
 
     const salt = await genSalt(10);
 
-    const newUser = new this.UserModel({
+    const newUser = this.UserModel.create({
       email: dto.email,
       login: dto.login,
       username: dto.login,
+      avatar: null,
       password: await hash(dto.password, salt),
     });
-
     await newUser.save();
 
-    const user = await newUser;
-
-    const { accessToken } = await this.issueTokenPair(String(user._id));
-
+    const { accessToken } = await this.issueTokenPair(String(newUser._id));
     res.cookie('token', accessToken, { httpOnly: true, secure: true });
 
     return {
-      user: this.returnUserField(user),
+      user: this.returnUserField(newUser)
     };
   }
 
@@ -86,9 +84,9 @@ export class AuthService {
   }
 
   async validateUser(dto: LoginAuthDto) {
-    const user = await this.UserModel.findOne({
-      $or: [{ login: dto.EmailorLogin }, { email: dto.EmailorLogin }],
-    });
+    const login = await this.UserModel.findOneBy({ login: dto.EmailorLogin });
+    const email = await this.UserModel.findOneBy({ email: dto.EmailorLogin });
+    const user = login || email;
     if (!user) throw new UnauthorizedException('Пользователь не найден :(');
     const isValidPassword = await compare(dto.password, user.password);
     if (!isValidPassword)

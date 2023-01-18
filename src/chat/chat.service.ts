@@ -1,34 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ModelType } from '@typegoose/typegoose/lib/types';
-import { Schema } from 'mongoose';
-import { InjectModel } from 'nestjs-typegoose';
 import { RequestFriendsDto } from 'src/auth/dto/user.dto';
 import { ReguestsModel } from 'src/user/reguests.model';
 import { FrinendsModel } from 'src/user/friends.model';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model';
 import * as fs from 'fs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository, ObjectID } from 'typeorm';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(ChatModel) private readonly ChatModel: ModelType<ChatModel>,
-    @InjectModel(ReguestsModel)
-    private readonly ReguestsModel: ModelType<ReguestsModel>,
-    @InjectModel(FrinendsModel)
-    private readonly FrinendsModel: ModelType<FrinendsModel>,
+    @InjectRepository(ChatModel) private readonly ChatModel: Repository<ChatModel>,
+    @InjectRepository(ReguestsModel)
+    private readonly ReguestsModel: Repository<ReguestsModel>,
+    @InjectRepository(FrinendsModel)
+    private readonly FrinendsModel: Repository<FrinendsModel>,
   ) {}
 
   async getAllMessages(dto: getMessageDto, page: number, limit: number) {
-    const messages = await this.ChatModel.find({
-      users: {
-        $all: [dto.from, dto.to],
-      },
-    })
-      .sort({ $natural: -1 })
-      .limit(limit)
-      .skip(page * limit);
-
+    const messages = await this.ChatModel.find({ where: { users: In([dto.from, dto.to]) }, order: { createdAt: 'DESC' }, skip: page * limit, take: limit });
     const projectMessages = messages
       .map((msg) => {
         return {
@@ -48,7 +39,7 @@ export class ChatService {
     const newMessage = this.ChatModel.create({
       message: dto.message,
       users: [dto.from, dto.to],
-      sender: dto.from,
+      sender: [dto.from],
       voiceMessage: dto.voiceMessage,
       attachments: dto.attachments,
     });
@@ -58,14 +49,17 @@ export class ChatService {
     }
     return await newMessage;
   }
+
   async updateMessage(payload: MessageUpdatePayload) {
     const { id, message, attachments } = payload;
-    await this.ChatModel.findByIdAndUpdate(id, { message, attachments });
-    const updatedMessage = await this.ChatModel.findById(id);
-    return updatedMessage;
+    return this.ChatModel.save({
+      _id: id,
+      message,
+      attachments,
+    });
   }
-  async removeMessage(payload: Schema.Types.ObjectId) {
-    const msg = await this.ChatModel.findByIdAndDelete(payload);
+  async removeMessage(_id: ObjectID) {
+    const msg = await this.ChatModel.findOne({ where: { _id }});
     if (msg.voiceMessage !== null) {
       this.deleteRecordMessage(msg.voiceMessage);
     }
@@ -78,16 +72,10 @@ export class ChatService {
         }
       });
     }
-    return msg;
+    return await this.ChatModel.delete(_id);
   }
   async clearMessages(dto: getMessageDto) {
-    await this.ChatModel.deleteMany({
-      $and: [
-        { 'users.0': [dto.from, dto.to] },
-        { 'users.1': [dto.from, dto.to] },
-        { 'sender.0': [dto.from] },
-      ],
-    });
+    return await this.ChatModel.createQueryBuilder().delete().where('users = :users', { users: [dto.from, dto.to] }).execute();
   }
 
   async requestFriends(dto: RequestFriendsDto) {
@@ -104,12 +92,12 @@ export class ChatService {
   }
 
   async acceptFriends(dto: RequestFriendsDto) {
-    const oldRequest = await this.ReguestsModel.findOneAndUpdate(
+    const oldRequest = await this.ReguestsModel.save(
       {
         sender: dto.sender,
         taker: dto.taker,
+        accept: dto.accept
       },
-      { accept: dto.accept },
     );
     const addToFriends = await this.FrinendsModel.create({
       id1: dto.sender,
