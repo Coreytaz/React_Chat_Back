@@ -1,22 +1,27 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import {Document} from 'mongoose';
 
-export interface UserModel extends Base {}
+export type UserModelDocument = UserModel & Document;
 
-export class UserModel extends TimeStamps {
-  @prop({ unique: true })
+@Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } })
+export class UserModel {
+  @Prop({ unique: true })
   email: string;
 
-  @prop({ unique: true })
+  @Prop({ unique: true })
   login: string;
 
-  @prop({ default: null })
+  @Prop({ default: null })
   avatar: string;
 
-  @prop()
+  @Prop()
   username: string;
 
-  @prop()
+  @Prop()
   password: string;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
+
+export const UserModelSchema = SchemaFactory.createForClass(UserModel);

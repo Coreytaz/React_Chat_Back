@@ -1,22 +1,26 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
-import { UserModel } from 'src/user/user.model';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, {Document} from 'mongoose';
+import { UserModel } from './user.model';
+
+export type ReguestsModelDocument = ReguestsModel & Document;
 
 export enum ACEPT_USER {
   unconfirmed = 0,
   confirmed = 1,
 }
-
-export interface ReguestsModel extends Base {}
-
-export class ReguestsModel extends TimeStamps {
-  @prop({ type: () => UserModel, ref: 'User', require: true })
+@Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } })
+export class ReguestsModel {
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]})
   sender: UserModel;
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]})
   taker: UserModel;
 
-  @prop({ type: Number, enum: ACEPT_USER, default: [ACEPT_USER.unconfirmed] })
+  @Prop({ type: Number, enum: ACEPT_USER, default: [ACEPT_USER.unconfirmed] })
   accept: ACEPT_USER;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
+
+export const ReguestsModelSchema = SchemaFactory.createForClass(ReguestsModel);

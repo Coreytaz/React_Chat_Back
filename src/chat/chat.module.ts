@@ -1,43 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypegooseModule } from 'nestjs-typegoose';
+import { MongooseModule } from '@nestjs/mongoose';
 import { JwtStrategy } from 'src/strategies/jwt.strategy';
-import { FrinendsModel } from 'src/user/friends.model';
-import { ReguestsModel } from 'src/user/reguests.model';
-import { UserModel } from 'src/user/user.model';
+import { FrinendsModelSchema } from 'src/user/friends.model';
+import { ReguestsModelSchema } from 'src/user/reguests.model';
+import { UserModelSchema } from 'src/user/user.model';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
-import { ChatModel } from './chat.model';
+import { ChatModelSchema } from './chat.model';
 import { ChatService } from './chat.service';
 
 @Module({
   imports: [
-    TypegooseModule.forFeature([
-      {
-        typegooseClass: ChatModel,
-        schemaOptions: {
-          collection: 'Chat',
-        },
-      },
-      {
-        typegooseClass: UserModel,
-        schemaOptions: {
-          collection: 'User',
-        },
-      },
-      {
-        typegooseClass: ReguestsModel,
-        schemaOptions: {
-          collection: 'Reguests',
-        },
-      },
-      {
-        typegooseClass: FrinendsModel,
-        schemaOptions: {
-          collection: 'Frinends',
-        },
-      },
-    ]),
+    MongooseModule.forFeature([{ name: 'Chat', schema: ChatModelSchema, collection: 'Chat' }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserModelSchema, collection: 'User' }]),
+    MongooseModule.forFeature([{ name: 'Reguests', schema: ReguestsModelSchema, collection: 'Reguests' }]),
+    MongooseModule.forFeature([ { name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' }]),
     ConfigModule,
   ],
   providers: [ChatGateway, ChatService, JwtStrategy],

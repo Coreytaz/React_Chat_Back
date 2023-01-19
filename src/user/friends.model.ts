@@ -1,14 +1,18 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
-import { UserModel } from 'src/user/user.model';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, {Document, ObjectId} from 'mongoose';
 
-export interface FrinendsModel extends Base {}
+export type FrinendsModelDocument = FrinendsModel & Document;
 
-export class FrinendsModel extends TimeStamps {
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  id1: UserModel;
+@Schema({ timestamps: true })
+export class FrinendsModel {
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]})
+  id1: ObjectId;
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  id2: UserModel;
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}]})
+  id2: ObjectId;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
+
+export const FrinendsModelSchema = SchemaFactory.createForClass(FrinendsModel);

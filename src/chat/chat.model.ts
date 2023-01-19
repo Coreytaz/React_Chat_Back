@@ -1,28 +1,30 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import { mongoose, prop } from '@typegoose/typegoose';
-import { Base, TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
-import { ObjectId } from 'mongoose';
-import { UserModel } from 'src/user/user.model';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, {Document, ObjectId} from 'mongoose';
 
-export interface ChatModel extends Base {}
+export type ChatModelDocument = ChatModel & Document;
 
-export class ChatModel extends TimeStamps {
-  @prop({ require: true })
+@Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } })
+export class ChatModel {
+  @Prop({ require: true })
   message: string;
 
-  @prop({
-    type: () => mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    require: true,
-  })
-  users: [ObjectId];
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}], require: true})
+  users: ObjectId[];
 
-  @prop({ type: () => UserModel, ref: 'User', require: true })
-  sender: UserModel[];
+  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}], require: true})
+  sender: ObjectId[];
 
-  @prop({ default: null })
+  @Prop({ default: null })
   voiceMessage?: string;
 
-  @prop({ default: [] })
+  @Prop({ default: [] })
   attachments?: [{ id: string; url: string }];
+
+  @Prop()
+  createdAt?: Date
+
+  @Prop()
+  updatedAt?: Date
 }
+
+export const ChatModelSchema = SchemaFactory.createForClass(ChatModel);

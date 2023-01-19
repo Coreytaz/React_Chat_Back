@@ -1,22 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ModelType } from '@typegoose/typegoose/lib/types';
-import { Schema } from 'mongoose';
-import { InjectModel } from 'nestjs-typegoose';
+import { Model, ObjectId } from 'mongoose';
 import { RequestFriendsDto } from 'src/auth/dto/user.dto';
-import { ReguestsModel } from 'src/user/reguests.model';
-import { FrinendsModel } from 'src/user/friends.model';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model';
 import * as fs from 'fs';
+import { InjectModel } from '@nestjs/mongoose';
+import { ReguestsModelDocument } from 'src/user/reguests.model';
+import { FrinendsModelDocument } from 'src/user/friends.model';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(ChatModel) private readonly ChatModel: ModelType<ChatModel>,
-    @InjectModel(ReguestsModel)
-    private readonly ReguestsModel: ModelType<ReguestsModel>,
-    @InjectModel(FrinendsModel)
-    private readonly FrinendsModel: ModelType<FrinendsModel>,
+    @InjectModel('Chat') private readonly ChatModel: Model<ChatModel>,
+    @InjectModel("Reguests") private readonly ReguestsModel: Model<ReguestsModelDocument>,
+    @InjectModel("Frinends") private readonly FrinendsModel: Model<FrinendsModelDocument>,
   ) {}
 
   async getAllMessages(dto: getMessageDto, page: number, limit: number) {
@@ -28,7 +25,6 @@ export class ChatService {
       .sort({ $natural: -1 })
       .limit(limit)
       .skip(page * limit);
-
     const projectMessages = messages
       .map((msg) => {
         return {
@@ -64,7 +60,7 @@ export class ChatService {
     const updatedMessage = await this.ChatModel.findById(id);
     return updatedMessage;
   }
-  async removeMessage(payload: Schema.Types.ObjectId) {
+  async removeMessage(payload: ObjectId) {
     const msg = await this.ChatModel.findByIdAndDelete(payload);
     if (msg.voiceMessage !== null) {
       this.deleteRecordMessage(msg.voiceMessage);

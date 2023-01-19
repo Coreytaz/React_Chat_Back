@@ -1,15 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from 'nestjs-typegoose';
 import { UserModel } from '../user/user.model';
-import { ModelType } from '@typegoose/typegoose/lib/types';
 import { AuthService } from './auth.service';
 import * as fs from 'fs';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { Schema } from 'mongoose';
+import { Model, Schema } from 'mongoose';
 import { Request } from 'express';
 import { ReguestsModel } from 'src/user/reguests.model';
 import { FrinendsModel } from 'src/user/friends.model';
+import { InjectModel } from '@nestjs/mongoose';
 
 const regex = (string: string): RegExp => {
   return new RegExp(`^${string}`, 'g');
@@ -18,12 +17,12 @@ const regex = (string: string): RegExp => {
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>,
+    @InjectModel('User') private readonly UserModel: Model<UserModel>,
     private readonly authService: AuthService,
-    @InjectModel(ReguestsModel)
-    private readonly ReguestsModel: ModelType<ReguestsModel>,
-    @InjectModel(FrinendsModel)
-    private readonly FrinendsModel: ModelType<FrinendsModel>,
+    @InjectModel('Reguests')
+    private readonly ReguestsModel: Model<ReguestsModel>,
+    @InjectModel('Frinends')
+    private readonly FrinendsModel: Model<FrinendsModel>,
   ) {}
 
   async setAvatar(req, avatarUrl: string, file: Express.Multer.File, res) {

@@ -1,22 +1,21 @@
 import {
   BadRequestException,
   Injectable,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { ModelType } from '@typegoose/typegoose/lib/types';
 import { compare, genSalt, hash } from 'bcryptjs';
-import { InjectModel } from 'nestjs-typegoose';
-import { UserModel } from 'src/user/user.model';
+import { UserModel, UserModelDocument } from 'src/user/user.model';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(UserModel) private readonly UserModel: ModelType<UserModel>,
+    @InjectModel('User') private readonly UserModel: Model<UserModel>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -104,7 +103,7 @@ export class AuthService {
     return { accessToken };
   }
 
-  returnUserField(user: UserModel) {
+  returnUserField(user: UserModelDocument) {
     return {
       _id: user._id,
       email: user.email,
