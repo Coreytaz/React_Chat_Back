@@ -24,25 +24,21 @@ export class ChatGateway {
   ): Promise<void> {
     const sendUserSocketTo = online.get(payload.to);
     const newMes = await this.ChatService.addMessage(payload);
-    this.server
-      .to(String(payload.from))
-      .emit('MESG-YOU', {
+    this.server.to(String(payload.from)).emit('MESG-YOU', {
+      ...payload,
+      id: newMes._id,
+      createdAt: newMes.createdAt,
+      updatedAt: newMes.updatedAt,
+      voiceMessage: newMes.voiceMessage,
+    });
+    if (sendUserSocketTo) {
+      this.server.to(String(payload.to)).emit('MESG-RECIEVE', {
         ...payload,
         id: newMes._id,
         createdAt: newMes.createdAt,
         updatedAt: newMes.updatedAt,
         voiceMessage: newMes.voiceMessage,
       });
-    if (sendUserSocketTo) {
-      this.server
-        .to(String(payload.to))
-        .emit('MESG-RECIEVE', {
-          ...payload,
-          id: newMes._id,
-          createdAt: newMes.createdAt,
-          updatedAt: newMes.updatedAt,
-          voiceMessage: newMes.voiceMessage,
-        });
     }
   }
 

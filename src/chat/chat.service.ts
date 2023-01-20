@@ -12,8 +12,10 @@ import { FrinendsModelDocument } from 'src/user/friends.model';
 export class ChatService {
   constructor(
     @InjectModel('Chat') private readonly ChatModel: Model<ChatModel>,
-    @InjectModel("Reguests") private readonly ReguestsModel: Model<ReguestsModelDocument>,
-    @InjectModel("Frinends") private readonly FrinendsModel: Model<FrinendsModelDocument>,
+    @InjectModel('Reguests')
+    private readonly ReguestsModel: Model<ReguestsModelDocument>,
+    @InjectModel('Frinends')
+    private readonly FrinendsModel: Model<FrinendsModelDocument>,
   ) {}
 
   async getAllMessages(dto: getMessageDto, page: number, limit: number) {

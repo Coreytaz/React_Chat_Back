@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, {Document, ObjectId} from 'mongoose';
+import mongoose, { Document, ObjectId } from 'mongoose';
 
 export type ChatModelDocument = ChatModel & Document;
 
@@ -8,10 +8,16 @@ export class ChatModel {
   @Prop({ require: true })
   message: string;
 
-  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}], require: true})
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    require: true,
+  })
   users: ObjectId[];
 
-  @Prop({type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}], require: true})
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    require: true,
+  })
   sender: ObjectId[];
 
   @Prop({ default: null })
@@ -21,10 +27,10 @@ export class ChatModel {
   attachments?: [{ id: string; url: string }];
 
   @Prop()
-  createdAt?: Date
+  createdAt?: Date;
 
   @Prop()
-  updatedAt?: Date
+  updatedAt?: Date;
 }
 
 export const ChatModelSchema = SchemaFactory.createForClass(ChatModel);

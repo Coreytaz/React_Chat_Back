@@ -18,7 +18,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+// import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { getMessageDto } from './chat.dto';
 import { ChatService } from './chat.service';
 import { Response } from 'express';
@@ -30,7 +30,7 @@ export class ChatController {
 
   constructor(private readonly ChatService: ChatService) {}
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Post('getMessages')
   async getAllMessages(
@@ -41,7 +41,7 @@ export class ChatController {
     return this.ChatService.getAllMessages(dto, page, limit);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Post('recordMessage')
   @UseInterceptors(
@@ -70,7 +70,7 @@ export class ChatController {
     res.sendFile(fileId, { root: 'recordMessage' });
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Post('file')
   @UseInterceptors(
@@ -96,7 +96,7 @@ export class ChatController {
     res.sendFile(fileId, { root: 'file' });
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Delete('file/:fileId')
   async deleteFile(@Param('fileId') fileId) {

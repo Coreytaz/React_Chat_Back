@@ -12,10 +12,18 @@ import { ChatService } from './chat.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'Chat', schema: ChatModelSchema, collection: 'Chat' }]),
-    MongooseModule.forFeature([{ name: 'User', schema: UserModelSchema, collection: 'User' }]),
-    MongooseModule.forFeature([{ name: 'Reguests', schema: ReguestsModelSchema, collection: 'Reguests' }]),
-    MongooseModule.forFeature([ { name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' }]),
+    MongooseModule.forFeature([
+      { name: 'Chat', schema: ChatModelSchema, collection: 'Chat' },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserModelSchema, collection: 'User' },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'Reguests', schema: ReguestsModelSchema, collection: 'Reguests' },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' },
+    ]),
     ConfigModule,
   ],
   providers: [ChatGateway, ChatService, JwtStrategy],

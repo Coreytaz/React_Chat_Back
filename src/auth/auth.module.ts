@@ -16,9 +16,15 @@ import { FrinendsModelSchema } from 'src/user/friends.model';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'User', schema: UserModelSchema, collection: 'User' }]),
-    MongooseModule.forFeature([{ name: 'Reguests', schema: ReguestsModelSchema, collection: 'Reguests' }]),
-    MongooseModule.forFeature([{ name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' }]),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserModelSchema, collection: 'User' },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'Reguests', schema: ReguestsModelSchema, collection: 'Reguests' },
+    ]),
+    MongooseModule.forFeature([
+      { name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' },
+    ]),
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,7 +32,6 @@ import { FrinendsModelSchema } from 'src/user/friends.model';
       useFactory: getJwtConfig,
     }),
     PassportModule,
-
   ],
   providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
   controllers: [AuthController, UserController],
