@@ -20,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-// import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
 import { UserModel } from 'src/user/user.model';
@@ -32,7 +32,7 @@ export class UserController {
   SERVER_URL = 'http://localhost:5000/api/user/';
   constructor(private userService: UserService) {}
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('/avatar')
@@ -68,7 +68,7 @@ export class UserController {
     );
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Delete('/avatar')
@@ -76,7 +76,7 @@ export class UserController {
     this.userService.deleteAvatar(req, res);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Patch('/me')
@@ -84,7 +84,7 @@ export class UserController {
     return this.userService.updateUser(req, updateDto);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Get('/search')
@@ -97,21 +97,21 @@ export class UserController {
     res.sendFile(fileId, { root: 'avatars' });
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('getUser')
   async getUsers(@Query() sel: ObjectId) {
     return this.userService.getUser(sel);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('getReguestUser')
   async getRequestUser(@Req() req: Request) {
     return this.userService.getRequestUser(req);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('getFriends')
   async getFriends(@Req() req: Request) {

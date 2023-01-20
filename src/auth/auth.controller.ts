@@ -11,16 +11,16 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
-// import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
-// import { LocalAuthGuard } from 'src/guards/local-auth.guard';
+import { LocalAuthGuard } from 'src/guards/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly AuthService: AuthService) {}
 
-  // @UseGuards(LocalAuthGuard)
+  @UseGuards(LocalAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('login')
@@ -40,7 +40,7 @@ export class AuthController {
     return this.AuthService.register(dto, response);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Get('refresh')
@@ -48,7 +48,7 @@ export class AuthController {
     return this.AuthService.refresh(req, response);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Get('logout')
