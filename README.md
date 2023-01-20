@@ -13,7 +13,7 @@
 # База данных:
 - **MongoDB**
 
-## Запуск Frontend:
+## Запуск Backend:
 В корневой папке должен находится файл .env с переменными
 окружения [Скачать](https://drive.google.com/file/d/1K1BHnAMVjUO1MVkHa586mUeOIlvaGGfj/view?usp=sharing)
 
