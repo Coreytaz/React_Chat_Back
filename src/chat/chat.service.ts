@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Model, ObjectId } from 'mongoose';
-import { RequestFriendsDto } from 'src/auth/dto/user.dto';
+import { RequestFriendsDto } from '../auth/dto/user.dto';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model';
 import * as fs from 'fs';
 import { InjectModel } from '@nestjs/mongoose';
-import { ReguestsModelDocument } from 'src/user/reguests.model';
-import { FrinendsModelDocument } from 'src/user/friends.model';
+import { ReguestsModelDocument } from '../user/reguests.model';
+import { FrinendsModelDocument } from '../user/friends.model';
 
 @Injectable()
 export class ChatService {

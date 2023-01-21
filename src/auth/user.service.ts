@@ -6,8 +6,8 @@ import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
 import { Model, Schema } from 'mongoose';
 import { Request } from 'express';
-import { ReguestsModel } from 'src/user/reguests.model';
-import { FrinendsModel } from 'src/user/friends.model';
+import { ReguestsModel } from '../user/reguests.model';
+import { FrinendsModel } from '../user/friends.model';
 import { InjectModel } from '@nestjs/mongoose';
 
 const regex = (string: string): RegExp => {

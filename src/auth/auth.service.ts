@@ -7,7 +7,7 @@ import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { compare, genSalt, hash } from 'bcryptjs';
-import { UserModel, UserModelDocument } from 'src/user/user.model';
+import { UserModel, UserModelDocument } from '../user/user.model';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';

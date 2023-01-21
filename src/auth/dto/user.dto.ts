@@ -1,5 +1,5 @@
-import { ACEPT_USER } from 'src/user/reguests.model';
-import { UserModel } from 'src/user/user.model';
+import { ACEPT_USER } from '../../user/reguests.model';
+import { UserModel } from '../../user/user.model';
 
 export class SearchUserDto {
   email?: string;

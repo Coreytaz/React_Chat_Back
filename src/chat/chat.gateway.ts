@@ -6,7 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { ObjectId } from 'mongoose';
 import { Server, Socket } from 'socket.io';
-import { RequestFriendsDto } from 'src/auth/dto/user.dto';
+import { RequestFriendsDto } from '../auth/dto/user.dto';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatService } from './chat.service';
 

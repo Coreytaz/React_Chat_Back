@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { JwtStrategy } from 'src/strategies/jwt.strategy';
-import { FrinendsModelSchema } from 'src/user/friends.model';
-import { ReguestsModelSchema } from 'src/user/reguests.model';
-import { UserModelSchema } from 'src/user/user.model';
+import { JwtStrategy } from '../strategies/jwt.strategy';
+import { FrinendsModelSchema } from '../user/friends.model';
+import { ReguestsModelSchema } from '../user/reguests.model';
+import { UserModelSchema } from '../user/user.model';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChatModelSchema } from './chat.model';

@@ -20,10 +20,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { UserModel } from 'src/user/user.model';
+import { UserModel } from '../user/user.model';
 import { ObjectId } from 'mongoose';
 import { Request } from 'express';
 
