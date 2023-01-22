@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { FrinendsModelSchema } from '../user/friends.model';
 import { ReguestsModelSchema } from '../user/reguests.model';
@@ -25,6 +26,7 @@ import { ChatService } from './chat.service';
       { name: 'Frinends', schema: FrinendsModelSchema, collection: 'Frinends' },
     ]),
     ConfigModule,
+    CloudinaryModule,
   ],
   providers: [ChatGateway, ChatService, JwtStrategy],
   controllers: [ChatController],

@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserModel } from '../user/user.model';
 import { AuthService } from './auth.service';
-import * as fs from 'fs';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
 import { Model, Schema } from 'mongoose';
@@ -9,6 +8,7 @@ import { Request } from 'express';
 import { ReguestsModel } from '../user/reguests.model';
 import { FrinendsModel } from '../user/friends.model';
 import { InjectModel } from '@nestjs/mongoose';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 const regex = (string: string): RegExp => {
   return new RegExp(`^${string}`, 'g');
@@ -25,12 +25,8 @@ export class UserService {
     private readonly FrinendsModel: Model<FrinendsModel>,
   ) {}
 
-  async setAvatar(req, avatarUrl: string, file: Express.Multer.File, res) {
+  async setAvatar(req, avatarUrl: string, res) {
     const userData = req.user;
-    if (userData.avatar !== null) {
-      fs.unlinkSync(userData.avatar.split('/').at(-1));
-    }
-
     userData.avatar = avatarUrl;
     await userData.save();
     return res.json({
@@ -39,12 +35,14 @@ export class UserService {
     });
   }
 
-  async deleteAvatar(req, res) {
+  async deleteAvatar(req, res, cloudinary: CloudinaryService) {
     const userData = req.user;
     if (!userData.avatar) {
       return;
     }
-    fs.unlinkSync(userData.avatar.split('/').at(-1));
+    await cloudinary.delete([
+      `avatars/${userData.avatar.split('/').at(-1).split('.').at(0)}`,
+    ]);
     userData.avatar = null;
     await userData.save();
     return res.json({

@@ -3,10 +3,10 @@ import { Model, ObjectId } from 'mongoose';
 import { RequestFriendsDto } from '../auth/dto/user.dto';
 import { addMessageDto, getMessageDto, MessageUpdatePayload } from './chat.dto';
 import { ChatModel } from './chat.model';
-import * as fs from 'fs';
 import { InjectModel } from '@nestjs/mongoose';
 import { ReguestsModelDocument } from '../user/reguests.model';
 import { FrinendsModelDocument } from '../user/friends.model';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ChatService {
@@ -16,6 +16,7 @@ export class ChatService {
     private readonly ReguestsModel: Model<ReguestsModelDocument>,
     @InjectModel('Frinends')
     private readonly FrinendsModel: Model<FrinendsModelDocument>,
+    private cloudinary: CloudinaryService,
   ) {}
 
   async getAllMessages(dto: getMessageDto, page: number, limit: number) {
@@ -68,13 +69,11 @@ export class ChatService {
       this.deleteRecordMessage(msg.voiceMessage);
     }
     if (msg.attachments.length > 0) {
-      msg.attachments.forEach((file) => {
-        try {
-          this.deleteFile(file.url);
-        } catch (e) {
-          return;
-        }
-      });
+      this.cloudinary.delete(
+        msg.attachments.map(
+          (file) => `file/${file.url.split('/').at(-1).split('.').at(0)}`,
+        ),
+      );
     }
     return msg;
   }
@@ -120,11 +119,9 @@ export class ChatService {
     return await oldRequest;
   }
 
-  deleteRecordMessage(urlMsg: string): void {
-    fs.unlinkSync(urlMsg.split('/').at(-1));
-  }
-
-  deleteFile(file: string): void {
-    fs.unlinkSync(file.split('/').at(-1));
+  async deleteRecordMessage(urlMsg: string): Promise<void> {
+    await this.cloudinary.delete([
+      `recordMessage/${urlMsg.split('/').at(-1).split('.').at(0)}`,
+    ]);
   }
 }

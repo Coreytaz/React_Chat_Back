@@ -13,6 +13,7 @@ import { JwtStrategy } from '../strategies/jwt.strategy';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ReguestsModelSchema } from '../user/reguests.model';
 import { FrinendsModelSchema } from '../user/friends.model';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { FrinendsModelSchema } from '../user/friends.model';
       useFactory: getJwtConfig,
     }),
     PassportModule,
+    CloudinaryModule,
   ],
   providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
   controllers: [AuthController, UserController],

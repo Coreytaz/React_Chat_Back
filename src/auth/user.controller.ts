@@ -18,38 +18,26 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { UserModel } from '../user/user.model';
 import { ObjectId } from 'mongoose';
 import { Request } from 'express';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Controller('user')
 export class UserController {
   SERVER_URL = 'http://localhost:5000/api/user/';
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private cloudinary: CloudinaryService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('/avatar')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      storage: diskStorage({
-        destination: './avatars',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          return cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('avatar'))
   async uploadAvatar(
     @Req() req,
     @UploadedFile() file: Express.Multer.File,
@@ -60,20 +48,17 @@ export class UserController {
         .status(404)
         .json({ error: 'Error', message: 'Не удалось получить файл' });
     }
-    this.userService.setAvatar(
-      req,
-      `${this.SERVER_URL}${file.path}`,
-      file,
-      res,
-    );
+    return this.cloudinary.upload(file, '/avatars').then((result) => {
+      this.userService.setAvatar(req, result.secure_url, res);
+    });
   }
 
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Delete('/avatar')
-  async deleteAvatar(@Req() req, @Res() res) {
-    this.userService.deleteAvatar(req, res);
+  async deleteAvatar(@Req() req, @Res() res: CloudinaryService) {
+    this.userService.deleteAvatar(req, res, this.cloudinary);
   }
 
   @UseGuards(JwtAuthGuard)
