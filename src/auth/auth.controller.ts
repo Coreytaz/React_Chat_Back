@@ -26,7 +26,7 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() dto: LoginAuthDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res() response: Response,
   ) {
     return this.AuthService.login(dto, response);
   }
@@ -35,7 +35,7 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: CreateAuthDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res() response: Response,
   ) {
     return this.AuthService.register(dto, response);
   }
@@ -44,7 +44,7 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Get('refresh')
-  async refresh(@Req() req, @Res({ passthrough: true }) response: Response) {
+  async refresh(@Req() req, @Res() response: Response) {
     return this.AuthService.refresh(req, response);
   }
 
