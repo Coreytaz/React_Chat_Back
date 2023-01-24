@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Options,
   Post,
   Req,
   Res,
@@ -30,6 +31,15 @@ export class AuthController {
   ) {
     return this.AuthService.login(dto, response);
   }
+  @HttpCode(200)
+  @Options('login')
+  async loginOptions(
+    @Body() dto: LoginAuthDto,
+    @Res() response: Response,
+  ) {
+    return response.status(200).end()
+  }
+
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('register')

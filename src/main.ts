@@ -4,7 +4,7 @@ import cookieParser = require("cookie-parser")
 
 const allowCors = fn => async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true)
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+  res.setHeader('Access-Control-Allow-Origin', 'http://192.168.0.100:3000')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -27,11 +27,10 @@ async function bootstrap() {
     const PORT = process.env.PORT || 5000;
     const app = await NestFactory.create(AppModule);
     app.enableCors({
-      origin: true,
+      origin: 'http://192.168.0.100:3000',
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      preflightContinue: false,
-      optionsSuccessStatus: 204,
       credentials: true,
+      allowedHeaders: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
     });
     app.setGlobalPrefix('api');
     app.use(cookieParser());
