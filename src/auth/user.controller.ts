@@ -4,102 +4,64 @@ import {
   Delete,
   Get,
   HttpCode,
-  Param,
   Patch,
   Post,
   Query,
   Req,
-  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateAuthDto } from './dto/auth.dto';
-import { SearchUserDto } from './dto/user.dto';
-import { ObjectId } from 'mongoose';
-import { Request } from 'express';
+import { SearchUserDto, UserQueryDto } from './dto/user.dto';
+import type { AuthRequest } from '../common/http';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserController {
-  SERVER_URL = 'http://localhost:5000/api/user/';
   constructor(
-    private userService: UserService,
-    private cloudinary: CloudinaryService,
+    private readonly users: UserService,
+    private readonly cloud: CloudinaryService,
   ) {}
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
+  @Post('avatar')
   @HttpCode(200)
-  @Post('/avatar')
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    }),
+  )
   async uploadAvatar(
-    @Req() req,
-    @UploadedFile() file: Express.Multer.File,
-    @Res() res,
+    @Req() req: AuthRequest,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    if (!file) {
-      return res
-        .status(404)
-        .json({ error: 'Error', message: 'Не удалось получить файл' });
+    const id = String(req.user._id);
+    const url = await this.cloud.upload(file, 'avatars', id);
+    try {
+      return await this.users.setAvatar(id, url);
+    } catch (error) {
+      await this.cloud.cleanup([url], id);
+      throw error;
     }
-    return this.cloudinary.upload(file, '/avatars').then((result) => {
-      this.userService.setAvatar(req, result.secure_url, res);
-    });
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Delete('/avatar')
-  async deleteAvatar(@Req() req, @Res() res: CloudinaryService) {
-    this.userService.deleteAvatar(req, res, this.cloudinary);
+  @Delete('avatar') deleteAvatar(@Req() req: AuthRequest) {
+    return this.users.deleteAvatar(String(req.user._id));
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Patch('/me')
-  async update(@Req() req, @Body() updateDto: UpdateAuthDto) {
-    return this.userService.updateUser(req, updateDto);
+  @Patch('me') update(@Req() req: AuthRequest, @Body() dto: UpdateAuthDto) {
+    return this.users.updateUser(String(req.user._id), dto);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Get('/search')
-  async search(@Query() dto: SearchUserDto, @Req() req) {
-    return this.userService.search(dto, req);
+  @Get('search') search(@Query() dto: SearchUserDto, @Req() req: AuthRequest) {
+    return this.users.search(dto, String(req.user._id));
   }
-
-  @Get('avatars/:fileId')
-  async serveAvatar(@Param('fileId') fileId, @Res() res): Promise<any> {
-    res.sendFile(fileId, { root: 'avatars' });
+  @Get('getUser') getUser(@Query() dto: UserQueryDto) {
+    return this.users.getUser(dto._id);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @Get('getUser')
-  async getUsers(@Query() sel: ObjectId) {
-    return this.userService.getUser(sel);
+  @Get('getReguestUser') requests(@Req() req: AuthRequest) {
+    return this.users.getRequestUser(String(req.user._id));
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @Get('getReguestUser')
-  async getRequestUser(@Req() req: Request) {
-    return this.userService.getRequestUser(req);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @Get('getFriends')
-  async getFriends(@Req() req: Request) {
-    return this.userService.getFriends(req);
+  @Get('getFriends') friends(@Req() req: AuthRequest) {
+    return this.users.getFriends(String(req.user._id));
   }
 }

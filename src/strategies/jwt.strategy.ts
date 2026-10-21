@@ -2,37 +2,32 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserModel } from '../user/user.model';
-import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-
-const cookieExtractor = (req) => {
-  let token = null;
-  if (req && req.cookies) {
-    token = req.cookies.token;
-  }
-  return token;
-};
-
+import { Model } from 'mongoose';
+import type { Request } from 'express';
+import { UserModel } from '../user/user.model';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
-    @InjectModel('User') private readonly UserModel: Model<UserModel>,
+    config: ConfigService,
+    @InjectModel('User') private readonly users: Model<UserModel>,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) => {
+          const cookies = req?.cookies as Record<string, unknown> | undefined;
+          return typeof cookies?.token === 'string' ? cookies.token : null;
+        },
+      ]),
+      secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
     });
   }
-
-  async validate(payload: any) {
-    const user = await this.UserModel.findById(payload._id);
-
-    if (!user) {
-      throw new UnauthorizedException('У вас нету доступа к этой странице');
-    }
+  async validate(payload: { _id?: string }) {
+    if (!payload._id || !/^[a-f0-9]{24}$/i.test(payload._id))
+      throw new UnauthorizedException();
+    const user = await this.users.findById(payload._id);
+    if (!user) throw new UnauthorizedException();
     return user;
   }
 }

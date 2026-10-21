@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { CloudinaryProvider } from './cloudinary';
+import { MongooseModule } from '@nestjs/mongoose';
 import { CloudinaryService } from './cloudinary.service';
-
+import { UploadSchema } from './upload.model';
+import { ModelsModule } from '../user/models.module';
 @Module({
-  imports: [ConfigModule.forRoot()],
-  providers: [CloudinaryProvider, CloudinaryService],
-  exports: [CloudinaryProvider, CloudinaryService],
+  imports: [
+    ModelsModule,
+    MongooseModule.forFeature([
+      { name: 'Upload', schema: UploadSchema, collection: 'Uploads' },
+    ]),
+  ],
+  providers: [CloudinaryService],
+  exports: [CloudinaryService],
 })
 export class CloudinaryModule {}

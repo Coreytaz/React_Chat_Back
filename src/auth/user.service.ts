@@ -1,168 +1,114 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { UserModel } from '../user/user.model';
+import { Friend } from '../user/friends.model';
+import { FriendRequest } from '../user/reguests.model';
 import { AuthService } from './auth.service';
 import { UpdateAuthDto } from './dto/auth.dto';
 import { SearchUserDto } from './dto/user.dto';
-import { Model, Schema } from 'mongoose';
-import { Request } from 'express';
-import { ReguestsModel } from '../user/reguests.model';
-import { FrinendsModel } from '../user/friends.model';
-import { InjectModel } from '@nestjs/mongoose';
+import { referenceId, validId } from '../common/ids';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-
-const regex = (string: string): RegExp => {
-  return new RegExp(`^${string}`, 'g');
-};
-
+const publicFields = { username: 1, avatar: 1 };
+const literalPrefix = (value: string) =>
+  new RegExp('^' + value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel('User') private readonly UserModel: Model<UserModel>,
-    private readonly authService: AuthService,
-    @InjectModel('Reguests')
-    private readonly ReguestsModel: Model<ReguestsModel>,
-    @InjectModel('Frinends')
-    private readonly FrinendsModel: Model<FrinendsModel>,
+    @InjectModel('User') private readonly users: Model<UserModel>,
+    @InjectModel('FriendRequest')
+    private readonly requests: Model<FriendRequest>,
+    @InjectModel('Friend') private readonly friends: Model<Friend>,
+    private readonly auth: AuthService,
+    private readonly cloud: CloudinaryService,
   ) {}
-
-  async setAvatar(req, avatarUrl: string, res) {
-    const userData = req.user;
-    userData.avatar = avatarUrl;
-    await userData.save();
-    return res.json({
-      message: 'Аватар успешно установлен',
-      avatar: userData.avatar,
-    });
-  }
-
-  async deleteAvatar(req, res, cloudinary: CloudinaryService) {
-    const userData = req.user;
-    if (!userData.avatar) {
-      return;
-    }
-    await cloudinary.delete([
-      `avatars/${userData.avatar.split('/').at(-1).split('.').at(0)}`,
-    ]);
-    userData.avatar = null;
-    await userData.save();
-    return res.json({
-      message: 'Аватар успешно удален',
-      avatar: userData.avatar,
-    });
-  }
-
-  async updateUser(req, updateDto: UpdateAuthDto) {
-    const user = { username: updateDto.username, email: updateDto.email };
-    return await this.authService.returnUserField(
-      await this.UserModel.findByIdAndUpdate(req.user._id, user),
+  async setAvatar(id: string, avatar: string) {
+    const user = await this.users.findByIdAndUpdate(
+      id,
+      { avatar },
+      { returnDocument: 'before' },
     );
+    if (!user) throw new NotFoundException();
+    if (user.avatar) await this.cloud.cleanup([user.avatar], id);
+    return { message: 'Аватар успешно установлен', avatar };
   }
-
-  async search(dto: SearchUserDto, req) {
-    const request = (await (
-      await this.getRequest(req)
-    ).map((friend) => String(friend._id))) as string[];
-    let qb = [];
-    if (dto.email || dto.username) {
-      qb = await this.UserModel.find(
+  async deleteAvatar(id: string) {
+    const user = await this.users.findByIdAndUpdate(
+      id,
+      { avatar: null },
+      { returnDocument: 'before' },
+    );
+    if (!user) throw new NotFoundException();
+    if (user.avatar) await this.cloud.cleanup([user.avatar], id);
+    return { message: 'Аватар успешно удален', avatar: null };
+  }
+  async updateUser(id: string, dto: UpdateAuthDto) {
+    const user = await this.users.findByIdAndUpdate(
+      id,
+      { $set: dto },
+      { returnDocument: 'after', runValidators: true },
+    );
+    if (!user) throw new NotFoundException();
+    return this.auth.returnUserField(user);
+  }
+  async search(dto: SearchUserDto, id: string) {
+    const relations = await this.requests
+      .find({ $or: [{ sender: id }, { taker: id }] })
+      .lean();
+    const friends = await this.friends
+      .find({ $or: [{ id1: id }, { id2: id }] })
+      .lean();
+    const related = new Set([
+      ...relations.flatMap((r) => [
+        referenceId(r.sender),
+        referenceId(r.taker),
+      ]),
+      ...friends.flatMap((r) => [referenceId(r.id1), referenceId(r.id2)]),
+    ]);
+    const alternatives = [];
+    if (dto.username)
+      alternatives.push({ username: literalPrefix(dto.username) });
+    if (dto.email) alternatives.push({ email: literalPrefix(dto.email) });
+    const items = await this.users
+      .find(
         {
-          _id: { $ne: req.user._id },
-          $or: [{ username: regex(dto.username) }, { email: regex(dto.email) }],
+          _id: { $ne: id },
+          ...(alternatives.length ? { $or: alternatives } : {}),
         },
-        { username: true, avatar: true },
-      ).limit(dto.limit || 10);
-    } else {
-      qb = await this.UserModel.find(
-        { _id: { $ne: req.user._id } },
-        { username: true, avatar: true },
-      ).limit(dto.limit || 10);
-    }
-    const filterUser = qb.map((user) => {
-      if (request.includes(String(user._id))) {
-        return {
-          ...user.toJSON(),
-          friends: true,
-        };
-      }
-      return user;
-    });
-
+        publicFields,
+      )
+      .sort({ _id: 1 })
+      .limit(dto.limit)
+      .lean();
     return {
-      items: filterUser,
-      total: filterUser.length,
+      items: items.map((user) => ({
+        ...user,
+        ...(related.has(String(user._id)) ? { friends: true } : {}),
+      })),
+      total: items.length,
     };
   }
-
-  async getUser(_id: Schema.Types.ObjectId) {
-    const user = await this.UserModel.findById(_id, {
-      username: true,
-      avatar: true,
-    });
-    if (!user) {
-      throw new UnauthorizedException('Ошибка чата');
-    }
+  async getUser(id: string) {
+    const user = await this.users.findById(validId(id), publicFields).lean();
+    if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
-
-  async getRequestUser(req: Request) {
-    const { _id } = req.user as any;
-    const request = await this.ReguestsModel.find(
-      { taker: _id, accept: 0 },
-      { sender: true },
+  async getRequestUser(id: string) {
+    const requests = await this.requests.find({ taker: id, accept: 0 }).lean();
+    return this.users
+      .find(
+        { _id: { $in: requests.map((r) => referenceId(r.sender)) } },
+        publicFields,
+      )
+      .lean();
+  }
+  async getFriends(id: string) {
+    const friends = await this.friends
+      .find({ $or: [{ id1: id }, { id2: id }] })
+      .lean();
+    const ids = friends.map((f) =>
+      referenceId(f.id1) === id ? referenceId(f.id2) : referenceId(f.id1),
     );
-    const user = [];
-    for (let i = 0; i < request.length; i++) {
-      user.push(
-        await this.UserModel.findById(request[i].sender, {
-          username: true,
-          avatar: true,
-        }),
-      );
-    }
-    return user;
-  }
-
-  async getRequest(req: Request) {
-    const { _id } = req.user as any;
-    const request = await this.ReguestsModel.find({
-      $or: [{ sender: _id }, { taker: _id }],
-    });
-    const user = [];
-    for (let i = 0; i < request.length; i++) {
-      const id1 = request[i].sender;
-      const id2 = request[i].taker;
-      if (String(id1) === String(_id)) {
-        user.push(
-          await this.UserModel.findById(id2, { username: true, avatar: true }),
-        );
-      } else {
-        user.push(
-          await this.UserModel.findById(id1, { username: true, avatar: true }),
-        );
-      }
-    }
-    return user;
-  }
-
-  async getFriends(req: Request) {
-    const { _id } = req.user as any;
-    const frinends = await this.FrinendsModel.find({
-      $or: [{ id1: _id }, { id2: _id }],
-    });
-    const user = [];
-    for (let i = 0; i < frinends.length; i++) {
-      const id1 = frinends[i].id1;
-      const id2 = frinends[i].id2;
-      if (String(id1) === String(_id)) {
-        user.push(
-          await this.UserModel.findById(id2, { username: true, avatar: true }),
-        );
-      } else {
-        user.push(
-          await this.UserModel.findById(id1, { username: true, avatar: true }),
-        );
-      }
-    }
-    return user;
+    return this.users.find({ _id: { $in: ids } }, publicFields).lean();
   }
 }

@@ -1,24 +1,103 @@
-# React-Chat-Back
+# React Chat Backend
 
-## 🛠 Технологии:
-- **Nest JS**
-- **TypeScript**
-- **bcryptjs**
-- **Jwt**
-- **mongoose** (ORM)
-- **socket.io** (Обмена данными в реальном времени)
-- **cookie-parser**
-- class-validator
+Локальный backend чата: NestJS 12, MongoDB/Mongoose 9, Socket.IO 4 и Cloudinary 2.
 
-# База данных:
-- **MongoDB**
+## Запуск
 
-## Запуск Backend:
-В корневой папке должен находится файл .env с переменными
-окружения [Скачать](https://drive.google.com/file/d/1K1BHnAMVjUO1MVkHa586mUeOIlvaGGfj/view?usp=sharing)
+Требуется Node.js 24.15 или новее в ветке 24.x. Проверено на Node.js 24.18.
 
- ```shell
-npm i
+```powershell
+npm ci
+Copy-Item .env.example .env
+# Заполните .env своими значениями, затем:
 npm run start:dev
 ```
-### [Ссылка](https://github.com/Coreytaz/react-web-chat) на Frontend
+
+Если `.env` уже настроен, не перезаписывайте его. Для запуска собранного приложения:
+
+```powershell
+npm run build
+npm start
+```
+
+Сервер слушает `127.0.0.1:5000`, HTTP API имеет префикс `/api`, Socket.IO использует `/socket.io`. Это постоянный Node.js-процесс; serverless-конфигурация Vercel удалена.
+
+Frontend в соседнем проекте `react-web-chat` запускается командой `npm run dev`. Стандартный Vite-прокси направляет `/api` и `/socket.io` на backend. Открывайте frontend на `http://localhost:5173`; при другом адресе добавьте точный origin в `CORS_ORIGINS`.
+
+## Окружение
+
+| Переменная              | Назначение                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- |
+| `MONGO_URL`             | Полный MongoDB URI с явным именем базы, например `/react-chat`; без имени MongoDB использует `test` |
+| `JWT_SECRET`            | Случайный секрет длиной не менее 32 символов                                                        |
+| `PORT`                  | Порт backend, по умолчанию 5000                                                                     |
+| `CORS_ORIGINS`          | Разрешённые origins через запятую; по умолчанию localhost:5173 и localhost:3000                     |
+| `COOKIE_SECURE`         | `false` для локального HTTP; `true` включает Secure и SameSite=None для HTTPS                       |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                                                                               |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                                                                                  |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                                                                               |
+
+`.env` и `.env.*`, кроме `.env.example`, исключены из Git. Секреты, ранее опубликованные в конфигурации или истории Git, необходимо перевыпустить в MongoDB/Cloudinary и заменить локально. История репозитория не переписывалась.
+
+## API и права доступа
+
+Сохранены существующие маршруты `/auth`, `/user`, `/chat`, названия полей и событий, включая исторические опечатки `reguest` и `RECIEVE`.
+
+- Авторизация — JWT в HttpOnly cookie `token`. Cookie передаётся и в handshake Socket.IO. Проверяется origin, JWT и существование пользователя; при каждом событии JWT проверяется снова.
+- `/auth/register` требует email, login от 3 символов и password от 6 символов (максимум 72 байта UTF-8). `/auth/login` принимает `EmailorLogin` и `password`. `/auth/refresh` обновляет cookie, `/auth/logout` очищает её.
+- `/user/me` принимает частичное обновление email/username, возвращает обновлённый профиль. Пароли не возвращаются. Конфликт уникальности возвращает HTTP 409.
+- `/user/getUser?_id=...`, `/user/getFriends`, `/user/getReguestUser` и `/user/search?username=...&email=...&limit=10` требуют авторизации. Поиск трактует ввод буквально, лимит 1–100.
+- `POST /chat/getMessages?page=0&limit=30` принимает `{ from, to }`, где `from` обязан совпадать с авторизованным пользователем. `page` неотрицательный, `limit` 1–100. История сортируется по времени и `_id`; внутри страницы порядок хронологический.
+- `SEND-MESG` принимает `{ from, to, message, attachments, voiceMessage? }`. Достаточно текста, вложения или голоса. `message:update` и `message:delete` разрешены только автору. События переписки отправляются только двум участникам, включая их остальные вкладки.
+- `messages:clear` принимает `{ from, to }` и удаляет только сообщения вызывающего пользователя в этом диалоге у обоих участников.
+- `reguest:user` принимает `{ sender, taker }`; `accept:user` — `{ sender, taker, accept: 1 }`. Запрашивать можно только от своего имени, принимать — только входящий запрос. Повторное принятие не создаёт дубликат дружбы.
+
+Каждое клиентское событие Socket.IO поддерживает необязательный acknowledgement:
+
+```ts
+{ ok: true, data: result }
+// либо
+{ ok: false, error: { code: '403', message: '...' } }
+```
+
+При ошибке клиент также получает `operation:error` с `{ code, message }`. При истёкшем JWT соединение отключается. Frontend отображает ошибки операций и подключения. HTTP ошибки валидации имеют статус 400, отсутствующих сущностей — 404, прав доступа — 403. Непредвиденные ошибки не раскрывают детали провайдера.
+
+## Файлы и совместимость данных
+
+- Поля multipart: `avatar` для `/user/avatar`, `file` для `/chat/file`, `recordMessage` для `/chat/recordMessage`.
+- Аватары/вложения: JPEG или PNG, до 5 МиБ на файл, до 9 вложений в сообщении. Голос: WebM, Ogg, WAV, MP3 или MP4/M4A, до 20 МиБ. Проверяются MIME и сигнатура содержимого; окончательное декодирование выполняет Cloudinary.
+- Загрузки сохраняются в коллекции `Uploads` с владельцем, URL, Cloudinary public ID и resource type. Новый файл можно прикрепить или удалить только от имени владельца. Используемое в сообщении вложение нельзя удалить через `/chat/file/:fileId`.
+- Старые URL продолжают отображаться. Ресурсы без записи владельца не удаляются через Cloudinary API, чтобы не затронуть чужие файлы. При редактировании уже существующие вложения разрешено сохранить.
+- Очистка файлов выполняется после изменения сообщения/аватара. При сбое Cloudinary основная операция сохраняется, метаданные ресурса остаются для повторной очистки, в журнал пишется предупреждение без секретов.
+- Сохранены коллекции `User`, `Chat`, `Reguests`, `Frinends` и существующие массивы ссылок. Старые записи не переписываются. Новые связи используют дополнительный уникальный `pairKey`; существующие дубликаты не удаляются автоматически.
+
+## Проверки
+
+```powershell
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm audit
+```
+
+Автотесты поднимают изолированную MongoDB через `mongodb-memory-server`; при первом запуске требуется скачивание MongoDB. Cloudinary подменяется в тестах. Проверяются реальные HTTP/Socket.IO, валидация, права, изоляция событий, несколько вкладок, конкурентная дружба, очистка сообщений и обработка файлов. Jest запускается с `--experimental-vm-modules` для ESM-пакетов NestJS 12.
+
+TypeScript закреплён на 6.0.3: актуальные `typescript-eslint` и `ts-jest` ещё не поддерживают TypeScript 7. Типы Node соответствуют ветке 24. Для `@istanbuljs/load-nyc-config` установлен совместимый `js-yaml` 4.3.2 через override: это устраняет уязвимую зависимость `sprintf-js` без понижения Jest.
+
+### Явная проверка живых сервисов
+
+```powershell
+npm run build
+npm run test:live
+```
+
+Эта команда использует `.env`: создаёт трёх отдельных тестовых пользователей с уникальным префиксом, проверяет MongoDB, авторизацию, Socket.IO, дружбу, Cloudinary (аватар, картинку, WAV), очистку собственных сообщений. В `finally` удаляет только записи и файлы своего запуска, существующие пользовательские данные не очищает. При ошибке очистки выводит идентификатор запуска и завершает работу с ненулевым кодом.
+
+Для проверки через работающий Vite-прокси порт backend 5000 должен быть свободен:
+
+```powershell
+$env:SMOKE_FRONTEND_URL='http://localhost:5173'
+npm run test:live
+Remove-Item Env:SMOKE_FRONTEND_URL
+```

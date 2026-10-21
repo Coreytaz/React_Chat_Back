@@ -1,71 +1,69 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Delete,
-  Get,
   Param,
-  ParseIntPipe,
   Post,
   Query,
-  Res,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { getMessageDto } from './chat.dto';
+import type { AuthRequest } from '../common/http';
+import { GetMessageDto, PaginationDto } from './chat.dto';
 import { ChatService } from './chat.service';
-import { Response } from 'express';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 @Controller('chat')
+@UseGuards(JwtAuthGuard)
 export class ChatController {
-  SERVER_URL = 'http://localhost:5000/api/chat/';
-
   constructor(
-    private readonly ChatService: ChatService,
-    private cloudinary: CloudinaryService,
+    private readonly chat: ChatService,
+    private readonly cloud: CloudinaryService,
   ) {}
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @Post('getMessages')
-  async getAllMessages(
-    @Body() dto: getMessageDto,
-    @Query('page', new DefaultValuePipe(0), ParseIntPipe) page,
-    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit,
+  @Post('getMessages') getMessages(
+    @Body() dto: GetMessageDto,
+    @Query() pagination: PaginationDto,
+    @Req() req: AuthRequest,
   ) {
-    return this.ChatService.getAllMessages(dto, page, limit);
+    return this.chat.getAllMessages(
+      dto,
+      pagination.page,
+      pagination.limit,
+      String(req.user._id),
+    );
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
   @Post('recordMessage')
-  @UseInterceptors(FileInterceptor('recordMessage'))
-  async recordMessage(@UploadedFile() file: Express.Multer.File) {
-    return this.cloudinary.upload(file, '/recordMessage').then((result) => {
-      return result.secure_url;
-    });
+  @UseInterceptors(
+    FileInterceptor('recordMessage', {
+      limits: { fileSize: 20 * 1024 * 1024, files: 1 },
+    }),
+  )
+  recordMessage(
+    @Req() req: AuthRequest,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.cloud.upload(file, 'recordMessage', String(req.user._id));
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
   @Post('file')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return this.cloudinary.upload(file, '/file').then((result) => {
-      return result.secure_url;
-    });
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    }),
+  )
+  uploadFile(
+    @Req() req: AuthRequest,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.cloud.upload(file, 'file', String(req.user._id));
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @Delete('file/:fileId')
-  async deleteFile(@Param('fileId') fileId) {
-    this.cloudinary.delete([`file/${fileId.split('.').at(0)}`]);
+  @Delete('file/:fileId') async deleteFile(
+    @Param('fileId') fileId: string,
+    @Req() req: AuthRequest,
+  ) {
+    await this.cloud.removeFile(fileId, String(req.user._id));
+    return { message: 'Файл удален' };
   }
 }

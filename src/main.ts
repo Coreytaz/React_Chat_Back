@@ -1,31 +1,21 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import cookieParser = require("cookie-parser")
-
+import { configureApp } from './common/http';
+import { AuthSocketAdapter } from './chat/auth-socket.adapter';
 async function bootstrap() {
-  try {
-    const PORT = process.env.PORT || 5000;
-    const app = await NestFactory.create(AppModule);
-    app.enableCors({
-      origin: 'https://react-web-chat.vercel.app',
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      credentials: true,
-      allowedHeaders: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    });
-    app.setGlobalPrefix('api');
-    app.use(cookieParser());
-    app.use(
-      (req, res, next) => {
-        if (req.method === 'OPTIONS') {
-          res.status(200).end()
-          return
-        }
-        next()
-      }
-    )
-    await app.listen(PORT, () => console.log(`server started on PORT ${PORT}`));
-  } catch (error) {
-    console.log(error);
-  }
+  const app = await NestFactory.create(AppModule, { abortOnError: false });
+  configureApp(app);
+  app.useWebSocketAdapter(new AuthSocketAdapter(app));
+  await app.listen(
+    app.get(ConfigService).getOrThrow<number>('PORT'),
+    '127.0.0.1',
+  );
 }
-bootstrap();
+void bootstrap().catch(() => {
+  console.error(
+    'Backend startup failed. Check environment configuration and MongoDB connectivity.',
+  );
+  process.exitCode = 1;
+});

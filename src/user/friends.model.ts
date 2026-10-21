@@ -1,18 +1,18 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, ObjectId } from 'mongoose';
-
-export type FrinendsModelDocument = FrinendsModel & Document;
-
+import { Schema as MongoSchema, Types } from 'mongoose';
 @Schema({ timestamps: true })
-export class FrinendsModel {
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  id1: ObjectId;
-
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  id2: ObjectId;
-
-  createdAt: Date;
-  updatedAt: Date;
+export class Friend {
+  @Prop({
+    type: [{ type: MongoSchema.Types.ObjectId, ref: 'User' }],
+    required: true,
+  })
+  id1!: Types.ObjectId[];
+  @Prop({
+    type: [{ type: MongoSchema.Types.ObjectId, ref: 'User' }],
+    required: true,
+  })
+  id2!: Types.ObjectId[];
+  @Prop({ type: String }) pairKey?: string;
 }
-
-export const FrinendsModelSchema = SchemaFactory.createForClass(FrinendsModel);
+export const FriendSchema = SchemaFactory.createForClass(Friend);
+FriendSchema.index({ pairKey: 1 }, { unique: true, sparse: true });

@@ -7,52 +7,35 @@ import {
   Req,
   Res,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
+import type { AuthRequest } from '../common/http';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateAuthDto, LoginAuthDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from '../guards/local-auth.guard';
-
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly AuthService: AuthService) {}
-
-  @UseGuards(LocalAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
+  constructor(private readonly auth: AuthService) {}
   @Post('login')
-  async login(
-    @Body() dto: LoginAuthDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    return this.AuthService.login(dto, response);
-  }
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
+  login(@Body() dto: LoginAuthDto, @Res({ passthrough: true }) res: Response) {
+    return this.auth.login(dto, res);
+  }
   @Post('register')
-  async register(
+  @HttpCode(200)
+  register(
     @Body() dto: CreateAuthDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.AuthService.register(dto, response);
+    return this.auth.register(dto, res);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
   @Get('refresh')
-  async refresh(@Req() req, @Res({ passthrough: true }) response: Response) {
-    return this.AuthService.refresh(req, response);
-  }
-
   @UseGuards(JwtAuthGuard)
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
+  refresh(@Req() req: AuthRequest, @Res({ passthrough: true }) res: Response) {
+    return this.auth.refresh(req.user, res);
+  }
   @Get('logout')
-  async logout(@Res() res) {
-    return this.AuthService.logout(res);
+  logout(@Res({ passthrough: true }) res: Response) {
+    return this.auth.logout(res);
   }
 }
