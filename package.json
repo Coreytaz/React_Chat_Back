@@ -95,9 +95,5 @@
   "engines": {
     "node": ">=24.15 <25"
   },
-  "overrides": {
-    "@istanbuljs/load-nyc-config": {
-      "js-yaml": "4.3.2"
-    }
-  }
+  "packageManager": "pnpm@12.14.0"
 }

@@ -4,25 +4,35 @@
 
 ## Запуск
 
-Требуется Node.js 24.15 или новее в ветке 24.x. Проверено на Node.js 24.18.
+Требуется Node.js 24.15 или новее в ветке 24.x и pnpm 12.14.0. Проверено на Node.js 24.18.
 
 ```powershell
-npm ci
+corepack enable
+corepack prepare pnpm@12.14.0 --activate
+pnpm install --frozen-lockfile
 Copy-Item .env.example .env
 # Заполните .env своими значениями, затем:
-npm run start:dev
+pnpm run start:dev
 ```
 
 Если `.env` уже настроен, не перезаписывайте его. Для запуска собранного приложения:
 
 ```powershell
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
-Сервер слушает `127.0.0.1:5000`, HTTP API имеет префикс `/api`, Socket.IO использует `/socket.io`. Это постоянный Node.js-процесс; serverless-конфигурация Vercel удалена.
+Локально сервер слушает `127.0.0.1:5000`, HTTP API имеет префикс `/api`, Socket.IO использует `/socket.io`.
 
-Frontend в соседнем проекте `react-web-chat` запускается командой `npm run dev`. Стандартный Vite-прокси направляет `/api` и `/socket.io` на backend. Открывайте frontend на `http://localhost:5173`; при другом адресе добавьте точный origin в `CORS_ORIGINS`.
+Frontend в соседнем проекте `react-web-chat` запускается командой `pnpm run dev`. Стандартный Vite-прокси направляет `/api` и `/socket.io` на backend. Открывайте frontend на `http://localhost:5173`; при другом адресе добавьте точный origin в `CORS_ORIGINS`.
+
+## Деплой на Vercel
+
+`vercel.json` явно выбирает preset `nestjs`, установку через `pnpm install --frozen-lockfile` и автоматическую выходную директорию. Vercel использует `src/main.ts` как серверную точку входа и разворачивает NestJS как Function. Папка `public` для этого не требуется; указание `dist` как статической Output Directory также не запускает backend.
+
+В настройках проекта выберите корень этого репозитория, Node.js 24.x и отключите старый override Output Directory (`public`). Конфигурация в репозитории задаёт Framework Preset, Build Command и Install Command. Добавьте переменные из таблицы ниже в Environment Variables: для HTTPS задайте `COOKIE_SECURE=true`, а в `CORS_ORIGINS` укажите точный origin опубликованного frontend. После отправки изменений в Git запустите новый deployment.
+
+Эта конфигурация исправляет выбор типа сборки; работа опубликованного HTTP API и Socket.IO требует отдельной проверки. Комнаты Socket.IO хранятся в памяти процесса: при нескольких экземплярах Function доставка событий между ними требует общего адаптера, а стандартный polling — привязки сессий. Локальные тесты не подтверждают эти свойства облачного окружения. См. [NestJS на Vercel](https://vercel.com/docs/frameworks/backend/nestjs) и [WebSocket-соединения и общее состояние](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections).
 
 ## Окружение
 
@@ -74,22 +84,22 @@ Frontend в соседнем проекте `react-web-chat` запускает�
 ## Проверки
 
 ```powershell
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm audit
+pnpm run typecheck
+pnpm run lint
+pnpm test
+pnpm run build
+pnpm audit
 ```
 
 Автотесты поднимают изолированную MongoDB через `mongodb-memory-server`; при первом запуске требуется скачивание MongoDB. Cloudinary подменяется в тестах. Проверяются реальные HTTP/Socket.IO, валидация, права, изоляция событий, несколько вкладок, конкурентная дружба, очистка сообщений и обработка файлов. Jest запускается с `--experimental-vm-modules` для ESM-пакетов NestJS 12.
 
-TypeScript закреплён на 6.0.3: актуальные `typescript-eslint` и `ts-jest` ещё не поддерживают TypeScript 7. Типы Node соответствуют ветке 24. Для `@istanbuljs/load-nyc-config` установлен совместимый `js-yaml` 4.3.2 через override: это устраняет уязвимую зависимость `sprintf-js` без понижения Jest.
+TypeScript закреплён на 6.0.3: актуальные `typescript-eslint` и `ts-jest` ещё не поддерживают TypeScript 7. Типы Node соответствуют ветке 24. Для `@istanbuljs/load-nyc-config` установлен совместимый `js-yaml` 4.3.2 через `overrides` в `pnpm-workspace.yaml`: это устраняет уязвимую зависимость `sprintf-js` без понижения Jest.
 
 ### Явная проверка живых сервисов
 
 ```powershell
-npm run build
-npm run test:live
+pnpm run build
+pnpm run test:live
 ```
 
 Эта команда использует `.env`: создаёт трёх отдельных тестовых пользователей с уникальным префиксом, проверяет MongoDB, авторизацию, Socket.IO, дружбу, Cloudinary (аватар, картинку, WAV), очистку собственных сообщений. В `finally` удаляет только записи и файлы своего запуска, существующие пользовательские данные не очищает. При ошибке очистки выводит идентификатор запуска и завершает работу с ненулевым кодом.
@@ -98,6 +108,12 @@ npm run test:live
 
 ```powershell
 $env:SMOKE_FRONTEND_URL='http://localhost:5173'
-npm run test:live
+pnpm run test:live
 Remove-Item Env:SMOKE_FRONTEND_URL
 ```
+
+## Менеджер пакетов
+
+Версия pnpm закреплена в `packageManager`. У каждого репозитория свой `pnpm-lock.yaml`; после изменения зависимостей обновляйте его через `pnpm install`. Для воспроизводимой установки используйте `pnpm install --frozen-lockfile`. Настройки pnpm и разрешения install-скриптов находятся в `pnpm-workspace.yaml`. Vercel вызывает pnpm через Corepack, чтобы использовать закреплённую версию.
+
+Install-скрипт `mongodb-memory-server` отключён: production-установка не скачивает тестовую MongoDB. Тесты загружают её при первом запуске по мере необходимости.

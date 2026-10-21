@@ -1,0 +1,8 @@
+overrides:
+  '@istanbuljs/load-nyc-config>js-yaml': 4.3.2
+
+allowBuilds:
+  '@parcel/watcher': true
+  # MongoDB is downloaded on demand by tests, not during production install.
+  mongodb-memory-server: false
+  unrs-resolver: true
