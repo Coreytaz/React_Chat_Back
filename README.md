@@ -41,7 +41,7 @@ Frontend в соседнем проекте `react-web-chat` запускает�
 | `MONGO_URL`             | Полный MongoDB URI с явным именем базы, например `/react-chat`; без имени MongoDB использует `test` |
 | `JWT_SECRET`            | Случайный секрет длиной не менее 32 символов                                                        |
 | `PORT`                  | Порт backend, по умолчанию 5000                                                                     |
-| `CORS_ORIGINS`          | Разрешённые origins через запятую; по умолчанию localhost:5173 и localhost:3000                     |
+| `CORS_ORIGINS`          | Разрешённые origins через запятую; для production добавьте `https://react-web-chat.vercel.app`       |
 | `COOKIE_SECURE`         | `false` для локального HTTP; `true` включает Secure и SameSite=None для HTTPS                       |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                                                                               |
 | `CLOUDINARY_API_KEY`    | Cloudinary API key                                                                                  |

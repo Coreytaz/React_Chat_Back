@@ -22,7 +22,8 @@ export function validateEnvironment(env: Record<string, unknown>) {
   )
     throw new Error('Invalid COOKIE_SECURE');
   const origins = String(
-    env.CORS_ORIGINS ?? 'http://localhost:5173,http://localhost:3000',
+    env.CORS_ORIGINS ??
+      'http://localhost:5173,http://localhost:3000,https://react-web-chat.vercel.app',
   )
     .split(',')
     .map((origin) => origin.trim());
